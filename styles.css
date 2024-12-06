@@ -1,8 +1,103 @@
-/*
+.prayer_times_list{
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  text-align: center;
+}
+.prayer_itam{
+  direction: rtl;
+  width: 110px;
+  height: 160px;
+  padding: 5px;
+  background-color: #333;
+  border-radius: 10px;
+  border: #444 1px solid;
+}
+.prayer_title{
+  font-weight: bold;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* وسط‌چین کردن عنوان */
+.text_center {
+    text-align: center;
+}
 
-If your plugin does not need CSS, delete this file.
+/* دکمه با آیکون */
+.update-province-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin: 20px auto;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
-*/
+.update-province-button:hover {
+    background-color: #0056b3;
+}
+
+/* کانتینر لیست شهرها */
+.province-container {
+    max-height: 300px; /* ارتفاع محدود */
+    overflow-y: auto; /* فعال کردن اسکرول */
+    border: 1px solid #333; /* حاشیه برای تمایز */
+    padding: 5px;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+/* استایل برای لیست شهرها */
+.province-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .province-list li {
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .province-list li:hover {
+    background-color: #222;
+  }
+  
+/* استایل برای شهر انتخاب‌شده */
+.province-list li.selected {
+    background-color: #007bff; /* آبی */
+    color: white; /* متن سفید */
+    font-weight: bold;
+  }
+  
+
+  /* استایل برای باکس جستجو */
+  .search-box {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .no-results {
+    color: #888;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .setting_toggle{
+    direction: rtl;
+    text-align: right;
+    font-weight: bold;
+  }
