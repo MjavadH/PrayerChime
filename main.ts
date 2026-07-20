@@ -1,277 +1,269 @@
-import { Plugin, ItemView, WorkspaceLeaf, Notice, PluginSettingTab, Setting, App, IconName } from 'obsidian';
-
-interface province {
-  name: string;
-  code: string;
-}
-interface PrayerTime {
-  display: boolean;
-  text: string;
-}
-
-interface PrayerTimesPluginSettings {
-  selectedprovinceCode: string;
-  displayedTimes: Record<string, PrayerTime>;
-}
-
-const DEFAULT_SETTINGS: PrayerTimesPluginSettings = {
-  selectedprovinceCode: "1", // پیش‌فرض: تهران
-  displayedTimes: {
-    Imsaak: {display: true, text: "اذان صبح"},
-    Sunrise: {display: false, text: "طلوع خورشید"},
-    Noon: {display: false, text: "غروب آفتاب"},
-    Sunset: {display: true, text: "اذان ظهر"},
-    Maghreb: {display: true, text: "اذان مغرب"},
-    Midnight: {display: false, text: "نیمه شب شرعی"},
-  },
-};
+import { App, ItemView, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, type IconName } from "obsidian";
+import { CityService } from "./city-service";
+import { PrayerService } from "./prayer-service";
+import type { CalculatedPrayerTimes, PrayerChimeSettings, PrayerKey } from "./types";
 
 const VIEW_TYPE_PRAYER_TIMES = "prayer-times-view";
+const SEARCH_LIMIT = 80;
 
-export default class PrayerTimesPlugin extends Plugin {
-  settings: PrayerTimesPluginSettings;
+const DEFAULT_SETTINGS: PrayerChimeSettings = {
+	selectedCityId: "",
+	displayedTimes: {
+		fajr: { display: true, text: "اذان صبح" },
+		sunrise: { display: false, text: "طلوع خورشید" },
+		dhuhr: { display: true, text: "اذان ظهر" },
+		asr: { display: false, text: "عصر" },
+		maghrib: { display: true, text: "اذان مغرب" },
+		isha: { display: false, text: "عشا" },
+		midnight: { display: false, text: "نیمه شب شرعی" },
+	},
+};
 
-  async onload() {
-    await this.loadSettings();
+const LEGACY_KEYS: Partial<Record<string, PrayerKey>> = {
+	Imsaak: "fajr",
+	Sunrise: "sunrise",
+	Noon: "dhuhr",
+	Sunset: "dhuhr",
+	Maghreb: "maghrib",
+	Midnight: "midnight",
+};
 
-    // ثبت View جدید
-    this.registerView(
-      VIEW_TYPE_PRAYER_TIMES,
-      (leaf) => new PrayerTimesView(leaf, this)
-    );
+export default class PrayerChimePlugin extends Plugin {
+	settings: PrayerChimeSettings = structuredClone(DEFAULT_SETTINGS);
+	readonly prayerService = new PrayerService();
+	private cityService: CityService | null = null;
+	private midnightTimeout: number | null = null;
 
-    const rightLeaf = this.app.workspace.getRightLeaf(false);
-    await rightLeaf.setViewState({
-      type: VIEW_TYPE_PRAYER_TIMES,
-      active: true,
-    });
-    this.app.workspace.revealLeaf(rightLeaf);
+	async onload(): Promise<void> {
+		this.cityService = new CityService(this.app.vault, this.manifest);
+		await this.loadSettings();
+		await this.ensureSelectedCity();
+		this.registerView(VIEW_TYPE_PRAYER_TIMES, (leaf) => new PrayerTimesView(leaf, this));
+		this.addSettingTab(new PrayerChimeSettingsTab(this.app, this));
+		this.app.workspace.onLayoutReady(() => {
+			void this.activateView();
+		});
+		this.scheduleMidnightRefresh();
+	}
 
-    this.addSettingTab(new PrayerTimesSettingsTab(this.app, this));
-  }
+	onunload(): void {
+		if (this.midnightTimeout !== null) {
+			window.clearTimeout(this.midnightTimeout);
+			this.midnightTimeout = null;
+		}
+	}
 
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
+	get cities(): CityService {
+		if (!this.cityService) {
+			this.cityService = new CityService(this.app.vault, this.manifest);
+		}
+		return this.cityService;
+	}
 
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
-  
-  async loadDefaultProvinces(): Promise<province[]> {
-    return [
-      {"name": "تهران", "code": "1"},
-      {"name": "اردبیل", "code": "26"},
-      {"name": "آذربایجان غربی", "code": "3"},
-      {"name": "مرکزی", "code": "4"},
-      {"name": "اصفهان", "code": "2"},
-      {"name": "خوزستان", "code": "5"},
-      {"name": "ایلام", "code": "29"},
-      {"name": "بوشهر", "code": "20"},
-      {"name": "آذربایجان شرقی", "code": "6"},
-      {"name": "لرستان", "code": "30"},
-      {"name": "گیلان", "code": "16"},
-    ];
-  }
+	async loadSettings(): Promise<void> {
+		const saved = (await this.loadData()) as Partial<PrayerChimeSettings> | null;
+		this.settings = this.normalizeSettings(saved ?? {});
+	}
 
-  async loadProvinces(): Promise<province[]> {
-    const filePath = `${this.manifest.dir}/data/iranian_province.json`; // تنظیم مسیر فایل
+	async saveSettings(): Promise<void> {
+		await this.saveData(this.settings);
+		await this.refreshViews();
+	}
 
-    try {
-        const fileData = await this.app.vault.adapter.read(filePath);
-        const cities: province[] = JSON.parse(fileData);
+	async calculatePrayerTimes(): Promise<CalculatedPrayerTimes> {
+		const city = await this.cities.getSelectedCity(this.settings.selectedCityId, this.settings.selectedprovinceCode);
+		if (city.id !== this.settings.selectedCityId) {
+			this.settings.selectedCityId = city.id;
+			this.settings.selectedCity = city.city;
+			await this.saveData(this.settings);
+		}
+		return this.prayerService.calculate(city, this.settings);
+	}
 
-        // فیلتر کردن مقادیر نامعتبر
-        const validCities = cities.filter(province => province.name && province.code && !isNaN(Number(province.code)));
-        if (validCities.length === 0) {
-            new Notice("هیچ شهر معتبری پیدا نشد.");
-        }
-        return validCities;
-    } catch (error) {
-        new Notice("خطا در خواندن فایل لیست شهر‌ها");
-        return this.loadDefaultProvinces();
-    }
-  }
+	async selectCity(cityId: string): Promise<void> {
+		const city = (await this.cities.getCities()).find((item) => item.id === cityId);
+		if (!city) {
+			return;
+		}
+		this.settings.selectedCityId = city.id;
+		this.settings.selectedCity = city.city;
+		await this.saveSettings();
+		new Notice(`شهر ${city.city} انتخاب شد.`);
+	}
 
-  async fetchPrayerTimes(provinceCode: string): Promise<any> {
-    const url = `https://prayer.aviny.com/api/prayertimes/${provinceCode}`;
-    try {
-      const response = await fetch(url);
-      return await response.json();
-    } catch (error) {
-      new Notice("خطا در دریافت اوقات شرعی.");
-      return null;
-    }
-  }
+	private normalizeSettings(saved: Partial<PrayerChimeSettings>): PrayerChimeSettings {
+		const settings = structuredClone(DEFAULT_SETTINGS);
+		settings.selectedCityId = typeof saved.selectedCityId === "string" ? saved.selectedCityId : "";
+		settings.selectedCity = typeof saved.selectedCity === "string" ? saved.selectedCity : undefined;
+		settings.selectedprovinceCode = typeof saved.selectedprovinceCode === "string" ? saved.selectedprovinceCode : undefined;
+		const savedTimes = saved.displayedTimes as Partial<PrayerChimeSettings["displayedTimes"]> | Record<string, unknown> | undefined;
+		if (savedTimes && typeof savedTimes === "object") {
+			for (const [key, value] of Object.entries(savedTimes)) {
+				const normalizedKey = (LEGACY_KEYS[key] ?? key) as PrayerKey;
+				if (normalizedKey in settings.displayedTimes && value && typeof value === "object") {
+					const display = (value as { display?: unknown; text?: unknown }).display;
+					const text = (value as { display?: unknown; text?: unknown }).text;
+					settings.displayedTimes[normalizedKey] = { display: typeof display === "boolean" ? display : settings.displayedTimes[normalizedKey].display, text: typeof text === "string" && text.length > 0 ? text : settings.displayedTimes[normalizedKey].text };
+				}
+			}
+		}
+		return settings;
+	}
+
+	private async ensureSelectedCity(): Promise<void> {
+		const city = await this.cities.getSelectedCity(this.settings.selectedCityId, this.settings.selectedprovinceCode);
+		if (city.id !== this.settings.selectedCityId) {
+			this.settings.selectedCityId = city.id;
+			this.settings.selectedCity = city.city;
+			await this.saveData(this.settings);
+		}
+	}
+
+	private async activateView(): Promise<void> {
+		if (this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES).length === 0) {
+			const leaf = this.app.workspace.getRightLeaf(false);
+			if (leaf) {
+				await leaf.setViewState({ type: VIEW_TYPE_PRAYER_TIMES, active: true });
+			}
+		}
+	}
+
+	private async refreshViews(): Promise<void> {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES)) {
+			const view = leaf.view;
+			if (view instanceof PrayerTimesView) {
+				await view.render();
+			}
+		}
+	}
+
+	private scheduleMidnightRefresh(): void {
+		if (this.midnightTimeout !== null) {
+			window.clearTimeout(this.midnightTimeout);
+		}
+		this.midnightTimeout = window.setTimeout(() => {
+			this.midnightTimeout = null;
+			void this.refreshViews();
+			this.scheduleMidnightRefresh();
+		}, this.prayerService.millisecondsUntilNextTehranMidnight());
+	}
 }
 
 class PrayerTimesView extends ItemView {
-  plugin: PrayerTimesPlugin;
+	private titleEl: HTMLHeadingElement | null = null;
+	private listEl: HTMLDivElement | null = null;
+	private statusEl: HTMLDivElement | null = null;
 
-  constructor(leaf: WorkspaceLeaf, plugin: PrayerTimesPlugin) {
-    super(leaf);
-    this.plugin = plugin;
-  }
+	constructor(leaf: WorkspaceLeaf, private readonly plugin: PrayerChimePlugin) {
+		super(leaf);
+	}
 
-  getViewType() {
-    return VIEW_TYPE_PRAYER_TIMES;
-  }
+	getViewType(): string {
+		return VIEW_TYPE_PRAYER_TIMES;
+	}
 
-  getIcon(): IconName {
-      return "clock";
-  }
-  getDisplayText() {
-    return "Prayer Times";
-  }
+	getIcon(): IconName {
+		return "clock";
+	}
 
-  async onload() {
-    const container = this.containerEl.children[1];
-    container.empty();
+	getDisplayText(): string {
+		return "PrayerChime";
+	}
 
-    // ایجاد عنوان و تنظیم وسط‌چین
-    const title = container.createEl("h3", { text: "اوقات شرعی", cls: "text_center"});
-    title.style.textAlign = "center";
+	async onOpen(): Promise<void> {
+		const container = this.containerEl.children[1];
+		container.empty();
+		container.addClass("prayer-chime-view");
+		this.titleEl = container.createEl("h3", { cls: "text_center" });
+		this.statusEl = container.createDiv({ cls: "prayer-chime-status" });
+		this.listEl = container.createDiv({ cls: "prayer_times_list" });
+		const button = container.createEl("button", { text: "بازنشانی ↻", cls: "update-province-button" });
+		this.registerDomEvent(button, "click", () => {
+			void this.render();
+		});
+		await this.render();
+	}
 
-    // دریافت اوقات شرعی
-    const provinceCode = this.plugin.settings.selectedprovinceCode;
-    const timings = await this.plugin.fetchPrayerTimes(provinceCode);
-
-      if (!timings) {
-        container.createEl("h5", { text: "اوقات شرعی یافت نشد.", cls: "text_center" });
-        const updateButton = container.createEl("button", {
-            text: "بازنشانی ↻",
-            cls: "update-province-button",
-        });
-        updateButton.addEventListener("click", async () => {
-            await this.plugin.saveSettings();
-            await this.onload(); // بازنشانی View
-        });
-        return;
-      }
-
-    // لیست اوقات شرعی
-    const prayerTimesList = container.createEl("div", { cls: "prayer_times_list" });
-    const displayedTimes = this.plugin.settings.displayedTimes;
-    
-    Object.entries(displayedTimes).forEach(([key, label]) => {
-      if(label.display){
-        const prayer_item = prayerTimesList.createDiv({cls: "prayer_itam"});
-
-        prayer_item.createEl("p", {text: label.text, cls: "prayer_title"});
-        prayer_item.createEl("p" , {text: timings[key] || "نامشخص" , cls: "prayer_value"});
-      }
-    });
-    container.childNodes[0].textContent = `اوقات شرعی ${timings["CityName"]}`
-
-    // دکمه بازنشانی
-    const updateButton = container.createEl("button", {
-        text: "بازنشانی",
-        cls: "update-province-button",
-    });
-    updateButton.textContent = `بازنشانی ↻`;
-    updateButton.style.direction = "rtl"; // راست‌چین
-    updateButton.addEventListener("click", async () => {
-        await this.plugin.saveSettings();
-        await this.onload(); // بازنشانی View
-    });
-  }
-
-  async onOpen() {
-    
-  }
-
-  async onClose() {
-    // هرگونه پاکسازی لازم
-  }
+	async render(): Promise<void> {
+		if (!this.titleEl || !this.listEl || !this.statusEl) {
+			return;
+		}
+		try {
+			const result = await this.plugin.calculatePrayerTimes();
+			this.titleEl.setText(`اوقات شرعی ${result.city.city}`);
+			this.statusEl.setText("");
+			this.listEl.empty();
+			for (const item of result.items) {
+				const itemEl = this.listEl.createDiv({ cls: "prayer_itam" });
+				itemEl.createEl("p", { text: item.label, cls: "prayer_title" });
+				itemEl.createEl("p", { text: item.time, cls: "prayer_value" });
+			}
+		} catch (error) {
+			this.titleEl.setText("اوقات شرعی");
+			this.statusEl.setText("اوقات شرعی یافت نشد.");
+			this.listEl.empty();
+		}
+	}
 }
 
-class PrayerTimesSettingsTab extends PluginSettingTab {
-  plugin: PrayerTimesPlugin;
+class PrayerChimeSettingsTab extends PluginSettingTab {
+	constructor(app: App, private readonly plugin: PrayerChimePlugin) {
+		super(app, plugin);
+	}
 
-  constructor(app: App, plugin: PrayerTimesPlugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  async display(): Promise<void> {
-    const { containerEl } = this;
-    containerEl.empty();
-    
-    // لیست اطلاعات اوقات شرعی
-    Object.entries(DEFAULT_SETTINGS.displayedTimes).forEach(([key, label]) => {
-      new Setting(containerEl)
-        .setName(`نمایش ${label.text}`)
-        .setClass("setting_toggle")
-        .addToggle((toggle) => {
-          toggle.setValue(this.plugin.settings.displayedTimes[key].display || false);
-          toggle.onChange(async (value) => {
-            this.plugin.settings.displayedTimes[key].display = value;
-            await this.plugin.saveSettings();
-          });
-        });
-    });
-    
-    containerEl.createEl("hr");
-    containerEl.createEl("h3", { text: "انتخاب استان",  cls: "text_center"});
-
-    // ایجاد باکس جستجو
-    const searchBox = containerEl.createEl("input", {
-      type: "text",
-      placeholder: "استان مورد نظر را جستجو کنید...",
-      cls: "search-box",
-    });
-
-    // ایجاد div برای لیست استان‌ها
-    const provinceContainer = containerEl.createEl("div", { cls: "province-container" });
-
-    // لیست استان‌ها
-    const provinceList = provinceContainer.createEl("ul", { cls: "province-list" });
-
-    // بارگذاری استان‌ها
-    const cities = await this.plugin.loadProvinces();
-
-    const renderCities = (filter: string) => {
-      provinceList.empty();
-
-      const filteredCities = cities.filter((province) => province.name.includes(filter));
-      filteredCities.forEach((province) => {
-        const listItem = provinceList.createEl("li");
-        listItem.textContent = province.name;
-
-        // بررسی و تنظیم استایل استان انتخاب‌شده
-        if (this.plugin.settings.selectedprovinceCode === province.code) {
-          listItem.classList.add("selected");
-        }
-
-        // مدیریت کلیک روی استان‌ها
-        listItem.addEventListener("click", async () => {
-          // حذف کلاس selected از تمام آیتم‌ها
-          provinceList.querySelectorAll("li").forEach((item) => {
-            item.classList.remove("selected");
-          });
-
-          // افزودن کلاس selected به آیتم کلیک‌شده
-          listItem.classList.add("selected");
-
-          // ذخیره استان انتخاب‌شده
-          this.plugin.settings.selectedprovinceCode = province.code;
-          await this.plugin.saveSettings();
-          new Notice(`شهر ${province.name} انتخاب شد.`);
-        });
-      });
-
-      // پیام در صورت نبود استان
-      if (filteredCities.length === 0) {
-        provinceList.createEl("li", { text: "هیچ شهری یافت نشد.", cls: "no-results" });
-      }
-    };
-
-    renderCities("");
-
-    // جستجو هنگام تایپ
-    searchBox.addEventListener("input", () => {
-      const query = searchBox.value.trim();
-      renderCities(query);
-    });
-  }
+	async display(): Promise<void> {
+		const { containerEl } = this;
+		containerEl.empty();
+		for (const [key, value] of Object.entries(DEFAULT_SETTINGS.displayedTimes) as [PrayerKey, typeof DEFAULT_SETTINGS.displayedTimes[PrayerKey]][]) {
+			new Setting(containerEl).setName(`نمایش ${value.text}`).setClass("setting_toggle").addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.displayedTimes[key]?.display ?? false);
+				toggle.onChange(async (enabled) => {
+					this.plugin.settings.displayedTimes[key].display = enabled;
+					await this.plugin.saveSettings();
+				});
+			});
+		}
+		containerEl.createEl("hr");
+		containerEl.createEl("h3", { text: "انتخاب شهر", cls: "text_center" });
+		const searchBox = containerEl.createEl("input", { type: "text", placeholder: "شهر مورد نظر را جستجو کنید...", cls: "search-box" });
+		const cityContainer = containerEl.createDiv({ cls: "province-container" });
+		const cityList = cityContainer.createEl("ul", { cls: "province-list" });
+		const cities = await this.plugin.cities.getCities();
+		this.plugin.registerDomEvent(cityList, "click", (event) => {
+			const target = event.target instanceof HTMLElement ? event.target.closest("li[data-city-id]") : null;
+			const cityId = target instanceof HTMLElement ? target.dataset.cityId : undefined;
+			if (cityId) {
+				void this.plugin.selectCity(cityId).then(() => renderCities(searchBox.value.trim()));
+			}
+		});
+		let frame = 0;
+		const renderCities = (filter: string): void => {
+			if (frame) {
+				window.cancelAnimationFrame(frame);
+			}
+			frame = window.requestAnimationFrame(() => {
+				cityList.empty();
+				const fragment = document.createDocumentFragment();
+				const filtered = this.plugin.cities.search(cities, filter, SEARCH_LIMIT);
+				for (const city of filtered) {
+					const item = document.createElement("li");
+					item.textContent = city.province === city.city ? city.city : `${city.city}، ${city.province}`;
+					item.dataset.cityId = city.id;
+					if (city.id === this.plugin.settings.selectedCityId) {
+						item.addClass("selected");
+					}
+					fragment.appendChild(item);
+				}
+				if (filtered.length === 0) {
+					const empty = document.createElement("li");
+					empty.textContent = "هیچ شهری یافت نشد.";
+					empty.addClass("no-results");
+					fragment.appendChild(empty);
+				}
+				cityList.appendChild(fragment);
+			});
+		};
+		this.plugin.registerDomEvent(searchBox, "input", () => renderCities(searchBox.value.trim()));
+		renderCities("");
+	}
 }
