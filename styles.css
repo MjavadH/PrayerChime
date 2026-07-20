@@ -1,4 +1,8 @@
-.prayer_times_list{
+.prayer-chime-view {
+  direction: rtl;
+}
+
+.prayer_times_list {
   direction: rtl;
   display: flex;
   align-items: center;
@@ -7,7 +11,8 @@
   gap: 15px;
   text-align: center;
 }
-.prayer_itam{
+
+.prayer_itam {
   direction: rtl;
   width: 110px;
   height: 160px;
@@ -16,88 +21,90 @@
   border-radius: 10px;
   border: #444 1px solid;
 }
-.prayer_title{
+
+.prayer_title {
   font-weight: bold;
 }
 
-/* وسط‌چین کردن عنوان */
-.text_center {
-    text-align: center;
+.prayer_value {
+  font-variant-numeric: tabular-nums;
 }
 
-/* دکمه با آیکون */
+.prayer-chime-status,
+.text_center {
+  text-align: center;
+}
+
 .update-province-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    margin: 20px auto;
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  direction: rtl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 20px auto;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .update-province-button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
-/* کانتینر لیست شهرها */
 .province-container {
-    max-height: 300px; /* ارتفاع محدود */
-    overflow-y: auto; /* فعال کردن اسکرول */
-    border: 1px solid #333; /* حاشیه برای تمایز */
-    padding: 5px;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #333;
+  padding: 5px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
 
-/* استایل برای لیست شهرها */
 .province-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .province-list li {
-    margin: 5px 0;
-    padding: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .province-list li:hover {
-    background-color: #222;
-  }
-  
-/* استایل برای شهر انتخاب‌شده */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.province-list li {
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.province-list li:hover {
+  background-color: #222;
+}
+
 .province-list li.selected {
-    background-color: #007bff; /* آبی */
-    color: white; /* متن سفید */
-    font-weight: bold;
-  }
-  
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
 
-  /* استایل برای باکس جستجو */
-  .search-box {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #333;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  
-  .no-results {
-    color: #888;
-    text-align: center;
-    padding: 10px;
-  }
+.search-box {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
 
-  .setting_toggle{
-    direction: rtl;
-    text-align: right;
-    font-weight: bold;
-  }
+.no-results {
+  color: #888;
+  text-align: center;
+  padding: 10px;
+  cursor: default;
+}
+
+.setting_toggle {
+  direction: rtl;
+  text-align: right;
+  font-weight: bold;
+}
