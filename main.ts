@@ -47,7 +47,7 @@ export default class PrayerChimePlugin extends Plugin {
 	private midnightTimeout: number | null = null;
 
 	async onload(): Promise<void> {
-		this.cityService = new CityService(this.app.vault, this.manifest);
+		this.cityService = new CityService();
 		await this.loadSettings();
 		await this.ensureSelectedCity();
 		this.registerView(VIEW_TYPE_PRAYER_TIMES, (leaf) => new PrayerTimesView(leaf, this));
@@ -68,7 +68,7 @@ export default class PrayerChimePlugin extends Plugin {
 
 	get cities(): CityService {
 		if (!this.cityService) {
-			this.cityService = new CityService(this.app.vault, this.manifest);
+			this.cityService = new CityService();
 		}
 		return this.cityService;
 	}

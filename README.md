@@ -57,11 +57,10 @@ PrayerChime برای کاربرانی ساخته شده که می‌خواهند
    <Vault>/.obsidian/plugins/prayer-chime/
    ```
 
-3. فایل‌های خروجی پلاگین را داخل این پوشه قرار دهید. معمولاً این فایل‌ها لازم هستند:
+3. فایل‌های خروجی پلاگین را داخل این پوشه قرار دهید. این فایل‌ها لازم هستند:
    - `main.js`
    - `manifest.json`
    - `styles.css`
-   - پوشه `data/` شامل `iran-dataset.json`
 4. Obsidian را یک‌بار Reload کنید یا ببندید و دوباره باز کنید.
 5. از مسیر **Settings → Community plugins**، پلاگین **PrayerChime** را فعال کنید.
 

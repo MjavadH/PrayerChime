@@ -53,11 +53,10 @@ The plugin is designed for users who want quick access to prayer times while wri
    <Vault>/.obsidian/plugins/prayer-chime/
    ```
 
-3. Copy the plugin files into that folder. The required files are typically:
+3. Copy the plugin files into that folder. The required files are:
    - `main.js`
    - `manifest.json`
    - `styles.css`
-   - `data/iran-dataset.json`
 4. Reload Obsidian or restart the app.
 5. Enable **PrayerChime** from **Settings → Community plugins**.
 

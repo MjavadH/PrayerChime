@@ -1,7 +1,7 @@
-import { Notice, normalizePath, type PluginManifest, type Vault } from "obsidian";
+import { Notice } from "obsidian";
 import type { City, IranDatasetCityRecord } from "./types";
+import iranDataset from "./data/iran-dataset.json";
 
-const DATASET_PATH = "data/iran-dataset.json";
 const TEHRAN_CITY_NAME = "تهران";
 
 const normalizeText = (value: string): string => value.normalize("NFKC").replace(/[ي]/g, "ی").replace(/[ك]/g, "ک").replace(/\s+/g, " ").trim().toLocaleLowerCase("fa-IR");
@@ -20,7 +20,7 @@ const cityId = (city: IranDatasetCityRecord): string => `${city.state}|${city.pr
 export class CityService {
 	private citiesPromise: Promise<City[]> | null = null;
 
-	constructor(private readonly vault: Vault, private readonly manifest: PluginManifest) {}
+	constructor() {}
 
 	getCities(): Promise<City[]> {
 		this.citiesPromise ??= this.loadCities();
@@ -60,17 +60,24 @@ export class CityService {
 
 	private async loadCities(): Promise<City[]> {
 		try {
-			const path = normalizePath(`${this.manifest.dir ?? ""}/${DATASET_PATH}`);
-			const json = await this.vault.adapter.read(path);
-			const parsed = JSON.parse(json) as unknown;
-			const cities = this.parseDataset(parsed);
+			const cities = this.parseDataset(iranDataset);
+
 			if (cities.length === 0) {
 				throw new Error("Dataset does not contain valid cities");
 			}
 			return cities;
-		} catch (error) {
-			new Notice("خطا در خواندن فایل شهرها. تهران به صورت پیش‌فرض استفاده شد.");
-			return [{ id: "fallback-tehran", state: TEHRAN_CITY_NAME, province: TEHRAN_CITY_NAME, city: TEHRAN_CITY_NAME, latitude: "35.6892", longitude: "51.3890", searchText: normalizeText(`${TEHRAN_CITY_NAME} ${TEHRAN_CITY_NAME} ${TEHRAN_CITY_NAME}`) }];
+		} catch {
+			new Notice("خطا در خواندن اطلاعات شهرها.");
+
+			return [{
+				id: "fallback-tehran",
+				state: "تهران",
+				province: "تهران",
+				city: "تهران",
+				latitude: "35.6892",
+				longitude: "51.3890",
+				searchText: normalizeText("تهران تهران تهران")
+			}];
 		}
 	}
 
