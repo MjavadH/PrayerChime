@@ -1,203 +1,202 @@
-# PrayerChime | پرِیرچایم
+# PrayerChime
 
-<div dir="rtl">
+## Overview
 
-## معرفی
+**PrayerChime** is a lightweight, offline, right-to-left friendly [Obsidian](https://obsidian.md) plugin for displaying Islamic prayer times for cities in Iran. It uses local city data and built-in prayer-time calculations, so it does not depend on an external API to show daily times.
 
-**PrayerChime** یک پلاگین سبک، آفلاین و راست‌به‌چپ برای [Obsidian](https://obsidian.md) است که اوقات شرعی شهرهای ایران را مستقیماً داخل فضای کاری شما نمایش می‌دهد. این پلاگین با استفاده از داده‌های محلی شهرها و محاسبه داخلی اوقات شرعی، بدون وابستگی به API خارجی، زمان‌هایی مانند اذان صبح، طلوع آفتاب، اذان ظهر، اذان عصر، غروب آفتاب، اذان مغرب، اذان عشاء و نیمه‌شب شرعی را در یک نمای اختصاصی نشان می‌دهد.
+The plugin is designed for users who want quick access to prayer times while writing notes, planning their day, studying, or working inside Obsidian.
 
-PrayerChime برای کاربرانی ساخته شده که می‌خواهند هنگام یادداشت‌برداری، مطالعه، برنامه‌ریزی روزانه یا کار با Obsidian، دسترسی سریع و مرتب به اوقات شرعی شهر خود داشته باشند.
+## Table of Contents
 
-## فهرست مطالب
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Settings](#settings)
+- [Development](#development)
+- [Project Structure](#project-structure)
+- [Privacy](#privacy)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [Persian README](REAME-FA.md)
 
-- [ویژگی‌ها](#ویژگیها)
-- [نصب](#نصب)
-- [راه‌اندازی سریع](#راهاندازی-سریع)
-- [نحوه استفاده](#نحوه-استفاده)
-- [تنظیمات](#تنظیمات)
-- [توسعه و ساخت از سورس](#توسعه-و-ساخت-از-سورس)
-- [ساختار پروژه](#ساختار-پروژه)
-- [حریم خصوصی](#حریم-خصوصی)
-- [عیب‌یابی](#عیبیابی)
-- [مشارکت](#مشارکت)
-- [مجوز](#مجوز)
-- [نسخه انگلیسی README](README-EN.md)
+## Features
 
-## ویژگی‌ها
+- **Offline prayer-time calculation** using local city coordinates.
+- **Iranian city support** through the bundled `data/iran-dataset.json` dataset.
+- **Fast city search** across city, province, and state/region names.
+- **Dedicated Obsidian view** that opens in the right sidebar.
+- **Customizable displayed times** for each prayer-time item.
+- **Visual time status** for past, upcoming, and current prayer times.
+- **Manual and scheduled refresh** with a refresh button and automatic midnight refresh based on Tehran time.
+- **Desktop and mobile compatibility** where supported by Obsidian.
+- **Persian-first UI** with right-to-left layout styles.
 
-- **محاسبه آفلاین اوقات شرعی**: محاسبه زمان‌ها با داده‌های محلی و بدون نیاز به درخواست شبکه.
-- **پشتیبانی از شهرهای ایران**: انتخاب شهر از میان دیتاست محلی ایران.
-- **جستجوی سریع شهر**: جستجو بین نام شهر، استان و ایالت/منطقه برای پیدا کردن سریع موقعیت موردنظر.
-- **نمای اختصاصی در Obsidian**: نمایش اوقات شرعی در پنل سمت راست Obsidian.
-- **شخصی‌سازی آیتم‌های قابل نمایش**: فعال یا غیرفعال کردن هر کدام از زمان‌های نماز و رویدادهای روزانه.
-- **نمایش وضعیت زمانی**: مشخص شدن زمان‌های گذشته، نزدیک و زمان فعلی با استایل‌های متفاوت.
-- **به‌روزرسانی دستی و خودکار**: دکمه بازنشانی در نما و زمان‌بندی بروزرسانی پس از نیمه‌شب تهران.
-- **سازگار با موبایل و دسکتاپ**: پلاگین فقط دسکتاپ نیست و در manifest به‌صورت قابل استفاده در محیط‌های پشتیبانی‌شده Obsidian تعریف شده است.
-- **رابط فارسی و راست‌به‌چپ**: طراحی‌شده برای تجربه کاربری فارسی‌زبان.
+## Installation
 
-## نصب
+### Install from Community Plugins
 
-### نصب از Community Plugins
+> Use this method if PrayerChime is available in the official Obsidian Community Plugins directory.
 
-1. در Obsidian وارد **Settings** شوید.
-2. به بخش **Community plugins** بروید.
-3. اگر Safe mode فعال است، آن را مطابق راهنمای Obsidian مدیریت کنید.
-4. روی **Browse** کلیک کنید.
-5. عبارت **PrayerChime** را جستجو کنید.
-6. پلاگین را نصب و سپس فعال کنید.
+1. Open **Settings** in Obsidian.
+2. Go to **Community plugins**.
+3. Click **Browse**.
+4. Search for **PrayerChime**.
+5. Install and enable the plugin.
 
-### نصب دستی
+### Manual Installation
 
-1. آخرین نسخه ساخته‌شده پلاگین را دریافت کنید.
-2. یک پوشه با نام `prayer-chime` در مسیر زیر بسازید:
+1. Download the latest built release of the plugin.
+2. Create this folder inside your vault:
 
    ```text
    <Vault>/.obsidian/plugins/prayer-chime/
    ```
 
-3. فایل‌های خروجی پلاگین را داخل این پوشه قرار دهید. این فایل‌ها لازم هستند:
+3. Copy the plugin files into that folder. The required files are:
    - `main.js`
    - `manifest.json`
    - `styles.css`
-4. Obsidian را یک‌بار Reload کنید یا ببندید و دوباره باز کنید.
-5. از مسیر **Settings → Community plugins**، پلاگین **PrayerChime** را فعال کنید.
+4. Reload Obsidian or restart the app.
+5. Enable **PrayerChime** from **Settings → Community plugins**.
 
-## راه‌اندازی سریع
+## Quick Start
 
-1. پس از فعال‌سازی، نمای **PrayerChime** به پنل سمت راست Obsidian اضافه می‌شود.
-2. از مسیر **Settings → PrayerChime** شهر خود را جستجو و انتخاب کنید.
-3. مشخص کنید کدام زمان‌ها نمایش داده شوند.
-4. به نمای PrayerChime برگردید و اوقات شرعی شهر انتخاب‌شده را مشاهده کنید.
-5. برای بروزرسانی دستی، روی دکمه **بازنشانی ↻** کلیک کنید.
+1. Enable the plugin in Obsidian.
+2. Open **Settings → PrayerChime**.
+3. Search for and select your city.
+4. Choose which prayer-time entries should be displayed.
+5. Open the PrayerChime view in the right sidebar.
+6. Use **بازنشانی ↻** to refresh the displayed times manually.
 
-## نحوه استفاده
+## Usage
 
-### انتخاب شهر
+### Select a City
 
-- وارد **Settings → PrayerChime** شوید.
-- در کادر جستجو، نام شهر یا استان را وارد کنید.
-- از فهرست نتایج، شهر موردنظر را انتخاب کنید.
-- پس از انتخاب، پلاگین نماهای باز را به‌روزرسانی می‌کند.
+- Open **Settings → PrayerChime**.
+- Type a city or province name in the search box.
+- Select the desired city from the results.
+- Open PrayerChime to see the updated times.
 
-### مشاهده اوقات شرعی
+### View Prayer Times
 
-اوقات شرعی در نمای اختصاصی PrayerChime نمایش داده می‌شود. هر آیتم شامل موارد زیر است:
+The PrayerChime view displays each enabled item with:
 
-- آیکون مرتبط با زمان
-- عنوان فارسی قابل تنظیم
-- ساعت محاسبه‌شده بر اساس زمان تهران
+- a contextual icon,
+- a Persian label,
+- the calculated time formatted for Tehran time.
 
-### وضعیت‌های نمایشی
+### Time Statuses
 
-PrayerChime برای خوانایی بهتر، وضعیت هر آیتم را در طول روز تغییر می‌دهد:
+PrayerChime highlights items during the day:
 
-- **نزدیک**: اگر تا زمان موردنظر ۱۰ دقیقه یا کمتر باقی مانده باشد.
-- **اکنون**: از زمان رسیدن تا چند دقیقه بعد از آن.
-- **گذشته**: پس از عبور از بازه زمانی مربوطه.
+- **Upcoming**: 10 minutes or less before the time.
+- **Current**: when the time has just arrived.
+- **Past**: after the active window has passed.
 
-## تنظیمات
+## Settings
 
-در صفحه تنظیمات پلاگین می‌توانید نمایش موارد زیر را فعال یا غیرفعال کنید:
+You can enable or disable these displayed entries:
 
-- اذان صبح
-- طلوع آفتاب
-- اذان ظهر
-- اذان عصر
-- غروب آفتاب
-- اذان مغرب
-- اذان عشاء
-- نیمه‌شب شرعی
+- Fajr
+- Sunrise
+- Dhuhr
+- Asr
+- Sunset
+- Maghrib
+- Isha
+- Islamic midnight
 
-شهر پیش‌فرض، در صورت نبود تنظیم معتبر یا مشکل در خواندن داده‌ها، تهران است.
+If no valid city is selected, or if the city dataset cannot be loaded, PrayerChime falls back to Tehran.
 
-## توسعه و ساخت از سورس
+## Development
 
-### پیش‌نیازها
+### Requirements
 
 - [Node.js](https://nodejs.org/)
 - npm
-- یک Vault برای تست در Obsidian
+- An Obsidian vault for local testing
 
-### نصب وابستگی‌ها
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### اجرای حالت توسعه
+### Development Build
 
 ```bash
 npm run dev
 ```
 
-### ساخت نسخه تولید
+### Production Build
 
 ```bash
 npm run build
 ```
 
-### افزایش نسخه
+### Version Bump
 
 ```bash
 npm run version
 ```
 
-## ساختار پروژه
+## Project Structure
 
 ```text
 .
-├── adhan.ts                 # منطق محاسبات اوقات شرعی
-├── city-service.ts          # خواندن، اعتبارسنجی و جستجوی شهرها
-├── data/iran-dataset.json   # دیتاست محلی شهرهای ایران
-├── main.ts                  # نقطه ورود پلاگین، نما و تنظیمات
-├── prayer-service.ts        # آماده‌سازی زمان‌های قابل نمایش
-├── styles.css               # استایل نمای پلاگین و تنظیمات
-├── types.ts                 # تایپ‌های TypeScript
-├── manifest.json            # اطلاعات پلاگین برای Obsidian
-└── package.json             # اسکریپت‌ها و وابستگی‌های توسعه
+├── adhan.ts                 # Prayer-time calculation logic
+├── city-service.ts          # City loading, validation, and search
+├── data/iran-dataset.json   # Local Iranian city dataset
+├── main.ts                  # Plugin entry point, view, and settings UI
+├── prayer-service.ts        # Display-ready prayer-time preparation
+├── styles.css               # Plugin view and settings styles
+├── types.ts                 # TypeScript types
+├── manifest.json            # Obsidian plugin manifest
+└── package.json             # Development scripts and dependencies
 ```
 
-## حریم خصوصی
+## Privacy
 
-PrayerChime برای محاسبه اوقات شرعی به API خارجی نیاز ندارد و داده‌های شهرها را از فایل محلی داخل پلاگین می‌خواند. تنظیمات انتخاب شهر و موارد نمایشی نیز توسط مکانیزم ذخیره‌سازی خود Obsidian در Vault کاربر ذخیره می‌شود.
+PrayerChime does not require an external API for prayer-time calculation. It reads city data from the bundled local dataset. User preferences, such as the selected city and visible prayer-time entries, are stored through Obsidian's plugin data storage in the user's vault.
 
-## عیب‌یابی
+## Troubleshooting
 
-### نمای PrayerChime را نمی‌بینم
+### I cannot see the PrayerChime view
 
-- مطمئن شوید پلاگین فعال است.
-- Obsidian را Reload کنید.
-- پنل سمت راست را بررسی کنید.
+- Make sure the plugin is enabled.
+- Reload Obsidian.
+- Check the right sidebar.
 
-### شهر موردنظر پیدا نمی‌شود
+### My city is not listed
 
-- نام شهر را با املای فارسی جستجو کنید.
-- نام استان را امتحان کنید.
-- اگر شهر واقعاً در دیتاست موجود نیست، می‌توانید با Pull Request آن را اضافه کنید.
+- Try searching with the Persian spelling.
+- Try searching by province name.
+- If the city is missing from the dataset, consider opening an issue or submitting a pull request.
 
-### اوقات شرعی نمایش داده نمی‌شود
+### Prayer times are not displayed
 
-- وجود فایل `data/iran-dataset.json` را در پوشه پلاگین بررسی کنید.
-- نسخه ساخته‌شده پلاگین را دوباره نصب کنید.
-- Console توسعه‌دهنده Obsidian را برای خطاهای احتمالی بررسی کنید.
+- Confirm that `data/iran-dataset.json` exists in the plugin folder.
+- Reinstall the built plugin files.
+- Check the Obsidian developer console for errors.
 
-## مشارکت
+## Contributing
 
-از مشارکت شما استقبال می‌شود. برای کمک به پروژه می‌توانید:
+Contributions are welcome. You can help by:
 
-- باگ‌ها را در بخش Issues گزارش کنید.
-- پیشنهاد قابلیت جدید ثبت کنید.
-- دیتاست شهرها یا مستندات را بهبود دهید.
-- Pull Request با توضیح روشن و قابل بررسی ارسال کنید.
+- reporting bugs,
+- suggesting new features,
+- improving the city dataset,
+- improving documentation,
+- opening focused pull requests with clear descriptions.
 
-پیش از ارسال Pull Request بهتر است دستور زیر را اجرا کنید:
+Before submitting a pull request, run:
 
 ```bash
 npm run build
 ```
 
-## مجوز
+## License
 
-این پروژه تحت مجوز **MIT** منتشر شده است. شما می‌توانید مطابق شرایط این مجوز از کد استفاده، آن را تغییر و بازنشر کنید.
-
-</div>
+This project is released under the **MIT License**.

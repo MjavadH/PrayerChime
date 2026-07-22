@@ -31,6 +31,21 @@ const DEFAULT_SETTINGS: PrayerChimeSettings = {
 	},
 };
 
+
+const cloneDefaultSettings = (): PrayerChimeSettings => ({
+	selectedCityId: DEFAULT_SETTINGS.selectedCityId,
+	displayedTimes: {
+		fajr: { ...DEFAULT_SETTINGS.displayedTimes.fajr },
+		sunrise: { ...DEFAULT_SETTINGS.displayedTimes.sunrise },
+		dhuhr: { ...DEFAULT_SETTINGS.displayedTimes.dhuhr },
+		asr: { ...DEFAULT_SETTINGS.displayedTimes.asr },
+		sunset: { ...DEFAULT_SETTINGS.displayedTimes.sunset },
+		maghrib: { ...DEFAULT_SETTINGS.displayedTimes.maghrib },
+		isha: { ...DEFAULT_SETTINGS.displayedTimes.isha },
+		midnight: { ...DEFAULT_SETTINGS.displayedTimes.midnight },
+	},
+});
+
 const LEGACY_KEYS: Partial<Record<string, PrayerKey>> = {
 	Imsaak: "fajr",
 	Sunrise: "sunrise",
@@ -41,7 +56,7 @@ const LEGACY_KEYS: Partial<Record<string, PrayerKey>> = {
 };
 
 export default class PrayerChimePlugin extends Plugin {
-	settings: PrayerChimeSettings = structuredClone(DEFAULT_SETTINGS);
+	settings: PrayerChimeSettings = cloneDefaultSettings();
 	readonly prayerService = new PrayerService();
 	private cityService: CityService | null = null;
 	private midnightTimeout: number | null = null;
@@ -63,7 +78,6 @@ export default class PrayerChimePlugin extends Plugin {
 			window.clearTimeout(this.midnightTimeout);
 			this.midnightTimeout = null;
 		}
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PRAYER_TIMES);
 	}
 
 	get cities(): CityService {
@@ -100,7 +114,7 @@ export default class PrayerChimePlugin extends Plugin {
 	}
 
 	private normalizeSettings(saved: Partial<PrayerChimeSettings>): PrayerChimeSettings {
-		const settings = structuredClone(DEFAULT_SETTINGS);
+		const settings = cloneDefaultSettings();
 		settings.selectedCityId = typeof saved.selectedCityId === "string" ? saved.selectedCityId : "";
 		settings.selectedCity = typeof saved.selectedCity === "string" ? saved.selectedCity : undefined;
 		settings.selectedprovinceCode = typeof saved.selectedprovinceCode === "string" ? saved.selectedprovinceCode : undefined;
@@ -232,7 +246,7 @@ class PrayerTimesView extends ItemView {
 				itemEl.createEl("p", { text: item.time, cls: "prayer_value" });
 			}
 			this.updateItemStatuses();
-		} catch (error) {
+		} catch {
 			this.headingEl.setText("اوقات شرعی");
 			this.statusEl.setText("اوقات شرعی یافت نشد.");
 			this.listEl.empty();
@@ -271,7 +285,15 @@ class PrayerChimeSettingsTab extends PluginSettingTab {
 		super(app, plugin);
 	}
 
-	async display(): Promise<void> {
+	getSettingDefinitions(): unknown[] {
+		return [];
+	}
+
+	display(): void {
+		void this.displayAsync();
+	}
+
+	private async displayAsync(): Promise<void> {
 		const { containerEl } = this;
 		containerEl.empty();
 		for (const [key, value] of Object.entries(DEFAULT_SETTINGS.displayedTimes) as [PrayerKey, typeof DEFAULT_SETTINGS.displayedTimes[PrayerKey]][]) {
@@ -284,7 +306,7 @@ class PrayerChimeSettingsTab extends PluginSettingTab {
 			});
 		}
 		containerEl.createEl("hr");
-		containerEl.createEl("h3", { text: "انتخاب شهر", cls: "text_center" });
+		new Setting(containerEl).setName("انتخاب شهر").setClass("text_center").setHeading();
 		const searchBox = containerEl.createEl("input", { type: "text", placeholder: "شهر مورد نظر را جستجو کنید...", cls: "search-box" });
 		const cityContainer = containerEl.createDiv({ cls: "province-container" });
 		const cityList = cityContainer.createEl("ul", { cls: "province-list" });
@@ -303,24 +325,19 @@ class PrayerChimeSettingsTab extends PluginSettingTab {
 			}
 			frame = window.requestAnimationFrame(() => {
 				cityList.empty();
-				const fragment = document.createDocumentFragment();
 				const filtered = this.plugin.cities.search(cities, filter, SEARCH_LIMIT);
 				for (const city of filtered) {
-					const item = document.createElement("li");
-					item.textContent = city.province === city.city ? city.city : `${city.city}، ${city.province}`;
-					item.dataset.cityId = city.id;
+					const item = cityList.createEl("li", {
+						text: city.province === city.city ? city.city : `${city.city}، ${city.province}`,
+						attr: { "data-city-id": city.id },
+					});
 					if (city.id === this.plugin.settings.selectedCityId) {
 						item.addClass("selected");
 					}
-					fragment.appendChild(item);
 				}
 				if (filtered.length === 0) {
-					const empty = document.createElement("li");
-					empty.textContent = "هیچ شهری یافت نشد.";
-					empty.addClass("no-results");
-					fragment.appendChild(empty);
+					cityList.createEl("li", { text: "هیچ شهری یافت نشد.", cls: "no-results" });
 				}
-				cityList.appendChild(fragment);
 			});
 		};
 		searchBox.addEventListener("input", () => renderCities(searchBox.value.trim()));
