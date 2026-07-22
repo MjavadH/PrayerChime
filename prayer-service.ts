@@ -14,8 +14,15 @@ interface DateParts {
 }
 
 const getTehranDateParts = (date: Date): DateParts => {
-	const [year, month, day] = DATE_FORMATTER.format(date).split("-").map(Number);
-	return { year: year ?? 1970, month: month ?? 1, day: day ?? 1 };
+	const parts = DATE_FORMATTER.format(date).split("-");
+	const year = parseInt(parts[0] || "", 10);
+	const month = parseInt(parts[1] || "", 10);
+	const day = parseInt(parts[2] || "", 10);
+	return {
+		year: isNaN(year) ? 1970 : year,
+		month: isNaN(month) ? 1 : month,
+		day: isNaN(day) ? 1 : day
+	};
 };
 
 const getTehranDate = (): Date => {

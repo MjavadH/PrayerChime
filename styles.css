@@ -213,15 +213,6 @@
 	box-sizing: border-box;
 }
 
-.province-container::-webkit-scrollbar {
-	width: 6px;
-}
-
-.province-container::-webkit-scrollbar-thumb {
-	background: var(--background-modifier-border);
-	border-radius: 3px;
-}
-
 .province-list {
 	list-style: none;
 	padding: 0;
