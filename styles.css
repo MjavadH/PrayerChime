@@ -211,7 +211,6 @@
 	padding: 6px;
 	border-radius: 10px;
 	box-sizing: border-box;
-	scrollbar-width: thin;
 }
 
 .province-container::-webkit-scrollbar {
@@ -288,9 +287,9 @@
 	font-size: 0.9em;
 }
 
-.no-results:hover {
-	background: transparent !important;
-	padding-right: 10px !important;
+.province-list li.no-results:hover {
+	background: transparent;
+	padding-right: 10px;
 }
 
 .setting_toggle {

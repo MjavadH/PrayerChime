@@ -7,11 +7,19 @@ const TIME_FORMATTER = new Intl.DateTimeFormat("fa-IR", { timeZone: TIME_ZONE, h
 
 const PRAYER_ORDER: PrayerKey[] = ["fajr", "sunrise", "dhuhr", "asr", "sunset", "maghrib", "isha", "midnight"];
 
+interface DateParts {
+	year: number;
+	month: number;
+	day: number;
+}
+
+const getTehranDateParts = (date: Date): DateParts => {
+	const [year, month, day] = DATE_FORMATTER.format(date).split("-").map(Number);
+	return { year: year ?? 1970, month: month ?? 1, day: day ?? 1 };
+};
+
 const getTehranDate = (): Date => {
-	const parts = DATE_FORMATTER.formatToParts(new Date());
-	const year = Number(parts.find((part) => part.type === "year")?.value ?? "1970");
-	const month = Number(parts.find((part) => part.type === "month")?.value ?? "1");
-	const day = Number(parts.find((part) => part.type === "day")?.value ?? "1");
+	const { year, month, day } = getTehranDateParts(new Date());
 	return new Date(Date.UTC(year, month - 1, day));
 };
 
@@ -43,10 +51,7 @@ export class PrayerService {
 
 	millisecondsUntilNextTehranMidnight(): number {
 		const now = new Date();
-		const parts = DATE_FORMATTER.formatToParts(now);
-		const year = Number(parts.find((part) => part.type === "year")?.value ?? "1970");
-		const month = Number(parts.find((part) => part.type === "month")?.value ?? "1");
-		const day = Number(parts.find((part) => part.type === "day")?.value ?? "1");
+		const { year, month, day } = getTehranDateParts(now);
 		const nextMidnightUtc = Date.UTC(year, month - 1, day + 1, -3, -30, 1);
 		return Math.max(1000, nextMidnightUtc - now.getTime());
 	}
