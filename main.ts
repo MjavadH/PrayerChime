@@ -84,12 +84,7 @@ export default class PrayerChimePlugin extends Plugin {
 	}
 
 	async calculatePrayerTimes(): Promise<CalculatedPrayerTimes> {
-		const city = await this.cities.getSelectedCity(this.settings.selectedCityId, this.settings.selectedprovinceCode);
-		if (city.id !== this.settings.selectedCityId) {
-			this.settings.selectedCityId = city.id;
-			this.settings.selectedCity = city.city;
-			await this.saveData(this.settings);
-		}
+		const city = await this.ensureSelectedCity();
 		return this.prayerService.calculate(city, this.settings);
 	}
 
@@ -123,13 +118,14 @@ export default class PrayerChimePlugin extends Plugin {
 		return settings;
 	}
 
-	private async ensureSelectedCity(): Promise<void> {
+	private async ensureSelectedCity() {
 		const city = await this.cities.getSelectedCity(this.settings.selectedCityId, this.settings.selectedprovinceCode);
 		if (city.id !== this.settings.selectedCityId) {
 			this.settings.selectedCityId = city.id;
 			this.settings.selectedCity = city.city;
 			await this.saveData(this.settings);
 		}
+		return city;
 	}
 
 	private async activateView(): Promise<void> {
@@ -293,7 +289,7 @@ class PrayerChimeSettingsTab extends PluginSettingTab {
 		const cityContainer = containerEl.createDiv({ cls: "province-container" });
 		const cityList = cityContainer.createEl("ul", { cls: "province-list" });
 		const cities = await this.plugin.cities.getCities();
-		this.plugin.registerDomEvent(cityList, "click", (event) => {
+		cityList.addEventListener("click", (event) => {
 			const target = event.target instanceof HTMLElement ? event.target.closest("li[data-city-id]") : null;
 			const cityId = target instanceof HTMLElement ? target.dataset.cityId : undefined;
 			if (cityId) {
@@ -327,7 +323,7 @@ class PrayerChimeSettingsTab extends PluginSettingTab {
 				cityList.appendChild(fragment);
 			});
 		};
-		this.plugin.registerDomEvent(searchBox, "input", () => renderCities(searchBox.value.trim()));
+		searchBox.addEventListener("input", () => renderCities(searchBox.value.trim()));
 		renderCities("");
 	}
 }
