@@ -1,110 +1,304 @@
 .prayer-chime-view {
-  direction: rtl;
+	direction: rtl;
+	padding: 4px 2px 16px;
+	font-family: var(--font-interface);
+}
+
+.prayer-chime-view h3.text_center {
+	text-align: center;
+	font-size: 0.78em;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	margin: 6px 0 18px;
+	opacity: 0.85;
 }
 
 .prayer_times_list {
-  direction: rtl;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  text-align: center;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 4px 2px;
 }
 
-.prayer_itam {
-  direction: rtl;
-  width: 110px;
-  height: 160px;
-  padding: 5px;
-  background-color: #333;
-  border-radius: 10px;
-  border: #444 1px solid;
+.prayer_item {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 16px;
+	background: var(--background-primary);
+	border-radius: 10px;
+	border: 1px solid var(--background-modifier-border);
+	overflow: hidden;
+	transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+	animation: prayer-slide-in 0.35s ease both;
+}
+
+.prayer_item::before {
+	content: "";
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 3px;
+	background: var(--background-modifier-border);
+	transition: background 0.25s ease, width 0.25s ease;
+}
+
+.prayer_item:hover {
+	transform: translateX(-2px);
+	border-color: var(--background-modifier-border-hover);
+	background: var(--background-secondary);
+}
+
+.prayer_title_wrapper {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.prayer_icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+	color: var(--text-muted);
+	background: var(--background-modifier-hover);
+	transition: color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+	flex-shrink: 0;
+}
+
+.prayer_icon svg {
+	width: 15px;
+	height: 15px;
+}
+
+.prayer_item:hover .prayer_icon {
+	transform: scale(1.05);
 }
 
 .prayer_title {
-  font-weight: bold;
+	font-size: 0.88em;
+	font-weight: 500;
+	color: var(--text-normal);
+	margin: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .prayer_value {
-  font-variant-numeric: tabular-nums;
+	font-size: 0.95em;
+	font-weight: 600;
+	color: var(--text-normal);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.02em;
+	margin: 0;
+	direction: ltr;
+}
+
+.prayer_item.past {
+	opacity: 0.45;
+	background: transparent;
+}
+
+.prayer_item.past .prayer_icon {
+	background: transparent;
+}
+
+.prayer_item.past::before {
+	background: var(--text-faint);
+}
+
+.prayer_item.approaching {
+	background: color-mix(in oklab, var(--color-orange, #f59e0b) 8%, var(--background-primary));
+	border-color: color-mix(in oklab, var(--color-orange, #f59e0b) 35%, var(--background-modifier-border));
+}
+
+.prayer_item.approaching::before {
+	width: 3px;
+	background: var(--color-orange, #f59e0b);
+	box-shadow: 0 0 12px color-mix(in oklab, var(--color-orange, #f59e0b) 60%, transparent);
+}
+
+.prayer_item.approaching .prayer_icon {
+	color: var(--color-orange, #f59e0b);
+	background: color-mix(in oklab, var(--color-orange, #f59e0b) 15%, transparent);
+	animation: prayer-pulse 2.4s ease-in-out infinite;
+}
+
+.prayer_item.now {
+	background: color-mix(in oklab, var(--color-green, #10b981) 12%, var(--background-primary));
+	border-color: color-mix(in oklab, var(--color-green, #10b981) 45%, var(--background-modifier-border));
+	box-shadow: 0 4px 20px -6px color-mix(in oklab, var(--color-green, #10b981) 40%, transparent);
+}
+
+.prayer_item.now::before {
+	width: 4px;
+	background: var(--color-green, #10b981);
+}
+
+.prayer_item.now .prayer_icon {
+	color: var(--color-green, #10b981);
+	background: color-mix(in oklab, var(--color-green, #10b981) 18%, transparent);
+}
+
+.prayer_item.now .prayer_title,
+.prayer_item.now .prayer_value {
+	color: var(--text-normal);
+	font-weight: 600;
+}
+
+@keyframes prayer-slide-in {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes prayer-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.6; }
 }
 
 .prayer-chime-status,
 .text_center {
-  text-align: center;
+	text-align: center;
+}
+
+.prayer-chime-status {
+	color: var(--text-muted);
+	font-size: 0.88em;
+	padding: 4px 0;
+	min-height: 1em;
 }
 
 .update-province-button {
-  direction: rtl;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  margin: 20px auto;
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+	direction: rtl;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 22px auto 4px;
+	padding: 8px 18px;
+	background: transparent;
+	color: var(--text-muted);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 0.82em;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
 .update-province-button:hover {
-  background-color: #0056b3;
+	color: var(--text-normal);
+	border-color: var(--interactive-accent);
+	background: color-mix(in oklab, var(--interactive-accent) 8%, transparent);
+}
+
+.update-province-button:active {
+	transform: scale(0.97);
 }
 
 .province-container {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #333;
-  padding: 5px;
-  border-radius: 4px;
-  box-sizing: border-box;
+	max-height: 320px;
+	overflow-y: auto;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	padding: 6px;
+	border-radius: 10px;
+	box-sizing: border-box;
+	scrollbar-width: thin;
+}
+
+.province-container::-webkit-scrollbar {
+	width: 6px;
+}
+
+.province-container::-webkit-scrollbar-thumb {
+	background: var(--background-modifier-border);
+	border-radius: 3px;
 }
 
 .province-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 }
 
 .province-list li {
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+	margin: 0;
+	padding: 10px 14px;
+	border-radius: 7px;
+	cursor: pointer;
+	font-size: 0.92em;
+	color: var(--text-normal);
+	transition: background 0.15s ease, color 0.15s ease, padding-right 0.2s ease;
 }
 
 .province-list li:hover {
-  background-color: #222;
+	background: var(--background-modifier-hover);
+	padding-right: 18px;
 }
 
 .province-list li.selected {
-  background-color: #007bff;
-  color: white;
-  font-weight: bold;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 600;
+}
+
+.province-list li.selected:hover {
+	background: var(--interactive-accent-hover);
 }
 
 .search-box {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #333;
-  border-radius: 4px;
-  box-sizing: border-box;
+	width: 100%;
+	padding: 10px 14px;
+	margin-bottom: 12px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-radius: 8px;
+	box-sizing: border-box;
+	font-size: 0.92em;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-box:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--interactive-accent) 20%, transparent);
+}
+
+.search-box::placeholder {
+	color: var(--text-faint);
 }
 
 .no-results {
-  color: #888;
-  text-align: center;
-  padding: 10px;
-  cursor: default;
+	color: var(--text-faint);
+	text-align: center;
+	padding: 20px 10px;
+	cursor: default;
+	font-size: 0.9em;
+}
+
+.no-results:hover {
+	background: transparent !important;
+	padding-right: 10px !important;
 }
 
 .setting_toggle {
-  direction: rtl;
-  text-align: right;
-  font-weight: bold;
+	direction: rtl;
+	text-align: right;
+}
+
+.setting_toggle .setting-item-name {
+	font-weight: 500;
+	font-size: 0.95em;
 }

@@ -1,21 +1,33 @@
-import { App, ItemView, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, type IconName } from "obsidian";
+import { App, ItemView, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, setIcon, type IconName } from "obsidian";
 import { CityService } from "./city-service";
 import { PrayerService } from "./prayer-service";
-import type { CalculatedPrayerTimes, PrayerChimeSettings, PrayerKey } from "./types";
+import type {CalculatedPrayerTimes, PrayerChimeSettings, PrayerKey, PrayerTimeItem} from "./types";
 
 const VIEW_TYPE_PRAYER_TIMES = "prayer-times-view";
 const SEARCH_LIMIT = 80;
+
+const PRAYER_ICONS: Record<PrayerKey, IconName> = {
+	fajr: "sunrise",
+	sunrise: "sunrise",
+	dhuhr: "sun",
+	asr: "sun-dim",
+	sunset: "sunset",
+	maghrib: "moon-star",
+	isha: "moon",
+	midnight: "sparkles",
+};
 
 const DEFAULT_SETTINGS: PrayerChimeSettings = {
 	selectedCityId: "",
 	displayedTimes: {
 		fajr: { display: true, text: "اذان صبح" },
-		sunrise: { display: false, text: "طلوع خورشید" },
+		sunrise: { display: true, text: "طلوع آفتاب" },
 		dhuhr: { display: true, text: "اذان ظهر" },
-		asr: { display: false, text: "عصر" },
+		asr: { display: true, text: "اذان عصر" },
+		sunset: { display: true, text: "غروب آفتاب" },
 		maghrib: { display: true, text: "اذان مغرب" },
-		isha: { display: false, text: "عشا" },
-		midnight: { display: false, text: "نیمه شب شرعی" },
+		isha: { display: true, text: "اذان عشاء" },
+		midnight: { display: true, text: "نیمه‌شب شرعی" },
 	},
 };
 
@@ -23,7 +35,7 @@ const LEGACY_KEYS: Partial<Record<string, PrayerKey>> = {
 	Imsaak: "fajr",
 	Sunrise: "sunrise",
 	Noon: "dhuhr",
-	Sunset: "dhuhr",
+	Sunset: "sunset",
 	Maghreb: "maghrib",
 	Midnight: "midnight",
 };
@@ -51,6 +63,7 @@ export default class PrayerChimePlugin extends Plugin {
 			window.clearTimeout(this.midnightTimeout);
 			this.midnightTimeout = null;
 		}
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PRAYER_TIMES);
 	}
 
 	get cities(): CityService {
@@ -123,7 +136,7 @@ export default class PrayerChimePlugin extends Plugin {
 		if (this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES).length === 0) {
 			const leaf = this.app.workspace.getRightLeaf(false);
 			if (leaf) {
-				await leaf.setViewState({ type: VIEW_TYPE_PRAYER_TIMES, active: true });
+				await leaf.setViewState({ type: VIEW_TYPE_PRAYER_TIMES, active: false });
 			}
 		}
 	}
@@ -150,9 +163,11 @@ export default class PrayerChimePlugin extends Plugin {
 }
 
 class PrayerTimesView extends ItemView {
-	private titleEl: HTMLHeadingElement | null = null;
+	private headingEl: HTMLHeadingElement | null = null;
 	private listEl: HTMLDivElement | null = null;
 	private statusEl: HTMLDivElement | null = null;
+	private updateTimer: number | null = null;
+	private currentItems: PrayerTimeItem[] = [];
 
 	constructor(leaf: WorkspaceLeaf, private readonly plugin: PrayerChimePlugin) {
 		super(leaf);
@@ -163,7 +178,7 @@ class PrayerTimesView extends ItemView {
 	}
 
 	getIcon(): IconName {
-		return "clock";
+		return "moon";
 	}
 
 	getDisplayText(): string {
@@ -171,37 +186,86 @@ class PrayerTimesView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
-		const container = this.containerEl.children[1];
+		const container = this.contentEl;
 		container.empty();
-		container.addClass("prayer-chime-view");
-		this.titleEl = container.createEl("h3", { cls: "text_center" });
-		this.statusEl = container.createDiv({ cls: "prayer-chime-status" });
-		this.listEl = container.createDiv({ cls: "prayer_times_list" });
-		const button = container.createEl("button", { text: "بازنشانی ↻", cls: "update-province-button" });
+
+		const content = container.createDiv();
+		content.addClass("prayer-chime-view");
+
+		this.headingEl = content.createEl("h3", { cls: "text_center" });
+		this.statusEl = content.createDiv({ cls: "prayer-chime-status" });
+		this.listEl = content.createDiv({ cls: "prayer_times_list" });
+
+		const button = content.createEl("button", {
+			text: "بازنشانی ↻",
+			cls: "update-province-button"
+		});
+
 		this.registerDomEvent(button, "click", () => {
 			void this.render();
 		});
+
+		this.updateTimer = window.setInterval(() => this.updateItemStatuses(), 30000);
+
 		await this.render();
 	}
 
+	async onClose(): Promise<void> {
+		if (this.updateTimer !== null) {
+			window.clearInterval(this.updateTimer);
+			this.updateTimer = null;
+		}
+	}
+
 	async render(): Promise<void> {
-		if (!this.titleEl || !this.listEl || !this.statusEl) {
+		if (!this.headingEl || !this.listEl || !this.statusEl) {
 			return;
 		}
 		try {
 			const result = await this.plugin.calculatePrayerTimes();
-			this.titleEl.setText(`اوقات شرعی ${result.city.city}`);
+			this.headingEl.setText(`اوقات شرعی ${result.city.city}`);
 			this.statusEl.setText("");
 			this.listEl.empty();
+			this.currentItems = result.items;
 			for (const item of result.items) {
-				const itemEl = this.listEl.createDiv({ cls: "prayer_itam" });
-				itemEl.createEl("p", { text: item.label, cls: "prayer_title" });
+				const itemEl = this.listEl.createDiv({ cls: "prayer_item", attr: { "data-key": item.key } });
+				const titleWrapper = itemEl.createDiv({ cls: "prayer_title_wrapper" });
+				const iconEl = titleWrapper.createSpan({ cls: "prayer_icon" });
+				setIcon(iconEl, PRAYER_ICONS[item.key]);
+				titleWrapper.createEl("span", { text: item.label, cls: "prayer_title" });
 				itemEl.createEl("p", { text: item.time, cls: "prayer_value" });
 			}
+			this.updateItemStatuses();
 		} catch (error) {
-			this.titleEl.setText("اوقات شرعی");
+			this.headingEl.setText("اوقات شرعی");
 			this.statusEl.setText("اوقات شرعی یافت نشد.");
 			this.listEl.empty();
+		}
+	}
+
+	private updateItemStatuses(): void {
+		if (!this.listEl) return;
+		const now = Date.now();
+		const children = this.listEl.children;
+		for (let i = 0; i < children.length; i++) {
+			const el = children[i] as HTMLElement;
+			const key = el.getAttribute("data-key");
+			const item = this.currentItems.find(x => x.key === key);
+			if (!item) continue;
+
+			const diffMins = (item.timestamp - now) / 60000;
+			el.removeClass("past", "now", "approaching");
+
+			if (diffMins > 0 && diffMins <= 10) {
+				// 10 minutes before prayer time
+				el.addClass("approaching");
+			} else if (diffMins <= 0 && diffMins >= -5) {
+				// Prayer time reached (up to 5 mins after)
+				el.addClass("now");
+			} else if (diffMins < -5) {
+				// Prayer time passed
+				el.addClass("past");
+			}
 		}
 	}
 }

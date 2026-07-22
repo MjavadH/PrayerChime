@@ -64,6 +64,7 @@ export class PrayerTimes {
 	readonly sunrise: Date;
 	readonly dhuhr: Date;
 	readonly asr: Date;
+	readonly sunset: Date;
 	readonly maghrib: Date;
 	readonly isha: Date;
 	readonly midnight: Date;
@@ -81,13 +82,16 @@ export class PrayerTimes {
 		const fajrOffset = hourAngle(coordinates.latitude, declination, -parameters.fajrAngle);
 		const maghribOffset = hourAngle(coordinates.latitude, declination, -parameters.maghribAngle);
 		const ishaOffset = hourAngle(coordinates.latitude, declination, -parameters.ishaAngle);
+		const asrAltitude = radiansToDegrees(Math.atan(1 / (1 + Math.tan(degreesToRadians(Math.abs(coordinates.latitude - declination))))));
+		const asrOffset = hourAngle(coordinates.latitude, declination, asrAltitude);
 		this.dhuhr = dateFromLocalHours(date, dhuhrHours);
 		this.sunrise = dateFromLocalHours(date, dhuhrHours - sunriseOffset);
+		this.sunset = dateFromLocalHours(date, dhuhrHours + sunriseOffset);
 		this.fajr = dateFromLocalHours(date, dhuhrHours - fajrOffset);
-		this.asr = dateFromLocalHours(date, dhuhrHours + hourAngle(coordinates.latitude, declination, -Math.atan(1 / (1 + Math.tan(Math.abs(degreesToRadians(coordinates.latitude - declination))))) * 180 / Math.PI));
+		this.asr = dateFromLocalHours(date, dhuhrHours + asrOffset);
 		this.maghrib = dateFromLocalHours(date, dhuhrHours + maghribOffset);
 		this.isha = dateFromLocalHours(date, dhuhrHours + ishaOffset);
-		const nightStart = parameters.midnightMode === "jafari" ? dhuhrHours + maghribOffset : dhuhrHours + sunriseOffset;
+		const nightStart = dhuhrHours + sunriseOffset;
 		const nextFajr = dhuhrHours + 24 - fajrOffset;
 		this.midnight = dateFromLocalHours(date, nightStart + (nextFajr - nightStart) / 2);
 	}

@@ -5,7 +5,7 @@ const TIME_ZONE = "Asia/Tehran";
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" });
 const TIME_FORMATTER = new Intl.DateTimeFormat("fa-IR", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false });
 
-const PRAYER_ORDER: PrayerKey[] = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha", "midnight"];
+const PRAYER_ORDER: PrayerKey[] = ["fajr", "sunrise", "dhuhr", "asr", "sunset", "maghrib", "isha", "midnight"];
 
 const getTehranDate = (): Date => {
 	const parts = DATE_FORMATTER.formatToParts(new Date());
@@ -26,6 +26,7 @@ export class PrayerService {
 			sunrise: prayerTimes.sunrise,
 			dhuhr: prayerTimes.dhuhr,
 			asr: prayerTimes.asr,
+			sunset: prayerTimes.sunset,
 			maghrib: prayerTimes.maghrib,
 			isha: prayerTimes.isha,
 			midnight: prayerTimes.midnight,
@@ -34,7 +35,7 @@ export class PrayerService {
 		for (const key of PRAYER_ORDER) {
 			const display = settings.displayedTimes[key];
 			if (display?.display) {
-				items.push({ key, label: display.text, time: toPersianTime(values[key]) });
+				items.push({ key, label: display.text, time: toPersianTime(values[key]), timestamp: values[key].getTime() });
 			}
 		}
 		return { city, dateKey: DATE_FORMATTER.format(new Date()), items };
