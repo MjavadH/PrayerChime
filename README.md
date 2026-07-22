@@ -39,8 +39,6 @@ PrayerChime برای کاربرانی ساخته شده که می‌خواهند
 
 ### نصب از Community Plugins
 
-> اگر PrayerChime در فهرست رسمی پلاگین‌های Obsidian منتشر شده باشد، این روش پیشنهاد می‌شود.
-
 1. در Obsidian وارد **Settings** شوید.
 2. به بخش **Community plugins** بروید.
 3. اگر Safe mode فعال است، آن را مطابق راهنمای Obsidian مدیریت کنید.
