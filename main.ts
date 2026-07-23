@@ -1,7 +1,7 @@
 import { App, ItemView, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, setIcon, type IconName } from "obsidian";
 import { CityService } from "./city-service";
 import { PrayerService } from "./prayer-service";
-import type {CalculatedPrayerTimes, PrayerChimeSettings, PrayerKey, PrayerTimeItem} from "./types";
+import type { CalculatedPrayerTimes, PrayerChimeSettings, PrayerKey, PrayerTimeItem } from "./types";
 
 const VIEW_TYPE_PRAYER_TIMES = "prayer-times-view";
 const SEARCH_LIMIT = 80;
@@ -29,335 +29,288 @@ const DEFAULT_SETTINGS: PrayerChimeSettings = {
 		isha: { display: true, text: "اذان عشاء" },
 		midnight: { display: true, text: "نیمه‌شب شرعی" },
 	},
-};
-
-
-const cloneDefaultSettings = (): PrayerChimeSettings => ({
-	selectedCityId: DEFAULT_SETTINGS.selectedCityId,
-	displayedTimes: {
-		fajr: { ...DEFAULT_SETTINGS.displayedTimes.fajr },
-		sunrise: { ...DEFAULT_SETTINGS.displayedTimes.sunrise },
-		dhuhr: { ...DEFAULT_SETTINGS.displayedTimes.dhuhr },
-		asr: { ...DEFAULT_SETTINGS.displayedTimes.asr },
-		sunset: { ...DEFAULT_SETTINGS.displayedTimes.sunset },
-		maghrib: { ...DEFAULT_SETTINGS.displayedTimes.maghrib },
-		isha: { ...DEFAULT_SETTINGS.displayedTimes.isha },
-		midnight: { ...DEFAULT_SETTINGS.displayedTimes.midnight },
-	},
-});
-
-const LEGACY_KEYS: Partial<Record<string, PrayerKey>> = {
-	Imsaak: "fajr",
-	Sunrise: "sunrise",
-	Noon: "dhuhr",
-	Sunset: "sunset",
-	Maghreb: "maghrib",
-	Midnight: "midnight",
+	warningIntervalMinutes: 10,
 };
 
 export default class PrayerChimePlugin extends Plugin {
-	settings: PrayerChimeSettings = cloneDefaultSettings();
-	readonly prayerService = new PrayerService();
-	private cityService: CityService | null = null;
-	private midnightTimeout: number | null = null;
+	settings: PrayerChimeSettings = DEFAULT_SETTINGS;
+	readonly cities = new CityService();
+	readonly prayer = new PrayerService();
 
 	async onload(): Promise<void> {
-		this.cityService = new CityService();
 		await this.loadSettings();
-		await this.ensureSelectedCity();
+
 		this.registerView(VIEW_TYPE_PRAYER_TIMES, (leaf) => new PrayerTimesView(leaf, this));
-		this.addSettingTab(new PrayerChimeSettingsTab(this.app, this));
-		this.app.workspace.onLayoutReady(() => {
+
+		this.addRibbonIcon("sparkles", "PrayerChime", () => {
 			void this.activateView();
 		});
-		this.scheduleMidnightRefresh();
-	}
 
-	onunload(): void {
-		if (this.midnightTimeout !== null) {
-			window.clearTimeout(this.midnightTimeout);
-			this.midnightTimeout = null;
-		}
-	}
+		this.addSettingTab(new PrayerChimeSettingTab(this.app, this));
 
-	get cities(): CityService {
-		if (!this.cityService) {
-			this.cityService = new CityService();
-		}
-		return this.cityService;
+		this.app.workspace.onLayoutReady(() => {
+			void this.initDefaultCity();
+		});
 	}
 
 	async loadSettings(): Promise<void> {
-		const saved = (await this.loadData()) as Partial<PrayerChimeSettings> | null;
-		this.settings = this.normalizeSettings(saved ?? {});
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
-		await this.refreshViews();
+		this.updateViews();
 	}
 
-	async calculatePrayerTimes(): Promise<CalculatedPrayerTimes> {
-		const city = await this.ensureSelectedCity();
-		return this.prayerService.calculate(city, this.settings);
+	async activateView(): Promise<void> {
+		const { workspace } = this.app;
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES)[0];
+
+		if (!leaf) {
+			const rightLeaf = workspace.getRightLeaf(false);
+			if (rightLeaf) {
+				leaf = rightLeaf;
+				await leaf.setViewState({ type: VIEW_TYPE_PRAYER_TIMES, active: true });
+			}
+		}
+
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+		}
+	}
+
+	updateViews(): void {
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES);
+		for (const leaf of leaves) {
+			if (leaf.view instanceof PrayerTimesView) {
+				leaf.view.refresh();
+			}
+		}
 	}
 
 	async selectCity(cityId: string): Promise<void> {
-		const city = (await this.cities.getCities()).find((item) => item.id === cityId);
-		if (!city) {
-			return;
-		}
-		this.settings.selectedCityId = city.id;
-		this.settings.selectedCity = city.city;
+		this.settings.selectedCityId = cityId;
 		await this.saveSettings();
-		new Notice(`شهر ${city.city} انتخاب شد.`);
 	}
 
-	private normalizeSettings(saved: Partial<PrayerChimeSettings>): PrayerChimeSettings {
-		const settings = cloneDefaultSettings();
-		const savedRecord = saved as Record<string, unknown>;
+	private async initDefaultCity(): Promise<void> {
+		const cities = await this.cities.getCities();
 
-		if (typeof savedRecord.selectedCityId === "string") {
-			settings.selectedCityId = savedRecord.selectedCityId;
+		if (!this.settings.selectedCityId || !cities.some((city) => city.id === this.settings.selectedCityId)) {
+			const defaultCity = this.cities.getTehran(cities);
+			this.settings.selectedCityId = defaultCity.id;
+			await this.saveSettings();
 		}
-		if (typeof savedRecord.selectedCity === "string") {
-			settings.selectedCity = savedRecord.selectedCity;
-		}
-		if (typeof savedRecord.selectedprovinceCode === "string") {
-			settings.selectedprovinceCode = savedRecord.selectedprovinceCode;
-		}
-
-		const savedTimes = savedRecord.displayedTimes;
-		if (savedTimes && typeof savedTimes === "object") {
-			const timesObj = savedTimes as Record<string, Record<string, unknown>>;
-			for (const key of Object.keys(timesObj)) {
-				const normalizedKey = (LEGACY_KEYS[key] ?? key) as PrayerKey;
-				const item = timesObj[key];
-				if (normalizedKey in settings.displayedTimes && item && typeof item === "object") {
-					const display = item.display;
-					const text = item.text;
-					settings.displayedTimes[normalizedKey] = {
-						display: typeof display === "boolean" ? display : settings.displayedTimes[normalizedKey].display,
-						text: typeof text === "string" && text.length > 0 ? text : settings.displayedTimes[normalizedKey].text,
-					};
-				}
-			}
-		}
-		return settings;
-	}
-
-	private async ensureSelectedCity() {
-		const city = await this.cities.getSelectedCity(this.settings.selectedCityId, this.settings.selectedprovinceCode);
-		if (city.id !== this.settings.selectedCityId) {
-			this.settings.selectedCityId = city.id;
-			this.settings.selectedCity = city.city;
-			await this.saveData(this.settings);
-		}
-		return city;
-	}
-
-	private async activateView(): Promise<void> {
-		if (this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES).length === 0) {
-			const leaf = this.app.workspace.getRightLeaf(false);
-			if (leaf) {
-				await leaf.setViewState({ type: VIEW_TYPE_PRAYER_TIMES, active: false });
-			}
-		}
-	}
-
-	private async refreshViews(): Promise<void> {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES)) {
-			const view = leaf.view;
-			if (view instanceof PrayerTimesView) {
-				await view.render();
-			}
-		}
-	}
-
-	private scheduleMidnightRefresh(): void {
-		if (this.midnightTimeout !== null) {
-			window.clearTimeout(this.midnightTimeout);
-		}
-		this.midnightTimeout = window.setTimeout(() => {
-			this.midnightTimeout = null;
-			void this.refreshViews();
-			this.scheduleMidnightRefresh();
-		}, this.prayerService.millisecondsUntilNextTehranMidnight());
 	}
 }
 
 class PrayerTimesView extends ItemView {
-	private headingEl: HTMLHeadingElement | null = null;
-	private listEl: HTMLDivElement | null = null;
-	private statusEl: HTMLDivElement | null = null;
-	private updateTimer: number | null = null;
-	private currentItems: PrayerTimeItem[] = [];
+	private readonly plugin: PrayerChimePlugin;
+	private timerId: number | null = null;
+	private lastCalculatedTimes: CalculatedPrayerTimes | null = null;
+	private itemElements: Map<PrayerKey, HTMLElement> = new Map();
 
-	constructor(leaf: WorkspaceLeaf, private readonly plugin: PrayerChimePlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: PrayerChimePlugin) {
 		super(leaf);
+		this.plugin = plugin;
 	}
 
 	getViewType(): string {
 		return VIEW_TYPE_PRAYER_TIMES;
 	}
 
-	getIcon(): IconName {
-		return "moon";
-	}
-
 	getDisplayText(): string {
 		return "PrayerChime";
 	}
 
+	getIcon(): IconName {
+		return "sparkles";
+	}
+
 	async onOpen(): Promise<void> {
-		const container = this.contentEl;
-		container.empty();
-
-		const content = container.createDiv();
-		content.addClass("prayer-chime-view");
-
-		this.headingEl = content.createEl("h3", { cls: "text_center" });
-		this.statusEl = content.createDiv({ cls: "prayer-chime-status" });
-		this.listEl = content.createDiv({ cls: "prayer_times_list" });
-
-		const button = content.createEl("button", {
-			text: "بازنشانی ↻",
-			cls: "update-province-button"
-		});
-
-		this.registerDomEvent(button, "click", () => {
-			void this.render();
-		});
-
-		this.updateTimer = window.setInterval(() => this.updateItemStatuses(), 30000);
-
-		await this.render();
+		this.render();
+		this.startTimer();
 	}
 
 	async onClose(): Promise<void> {
-		if (this.updateTimer !== null) {
-			window.clearInterval(this.updateTimer);
-			this.updateTimer = null;
-		}
+		this.stopTimer();
 	}
 
-	async render(): Promise<void> {
-		if (!this.headingEl || !this.listEl || !this.statusEl) {
-			return;
-		}
-		try {
-			const result = await this.plugin.calculatePrayerTimes();
-			this.headingEl.setText(`اوقات شرعی ${result.city.city}`);
-			this.statusEl.setText("");
-			this.listEl.empty();
-			this.currentItems = result.items;
-			for (const item of result.items) {
-				const itemEl = this.listEl.createDiv({ cls: "prayer_item", attr: { "data-key": item.key } });
-				const titleWrapper = itemEl.createDiv({ cls: "prayer_title_wrapper" });
-				const iconEl = titleWrapper.createSpan({ cls: "prayer_icon" });
+	refresh(): void {
+		this.render();
+	}
+
+	private render(): void {
+		const container = this.containerEl.children[1];
+		if (!container) return;
+
+		container.empty();
+		container.addClass("prayer-chime-view");
+
+		void this.plugin.cities.getCities().then((cities) => {
+			const city = cities.find((c) => c.id === this.plugin.settings.selectedCityId) ?? this.plugin.cities.getTehran(cities);
+			const calculated = this.plugin.prayer.calculate(city, this.plugin.settings);
+			this.lastCalculatedTimes = calculated;
+
+			const titleEl = container.createEl("h3", {
+				text: `اوقات شرعی ${city.city}`,
+				cls: "text_center",
+			});
+
+			const listEl = container.createDiv({ cls: "prayer_times_list" });
+			this.itemElements.clear();
+
+			for (const item of calculated.items) {
+				const itemEl = listEl.createDiv({ cls: "prayer_item" });
+				this.itemElements.set(item.key, itemEl);
+
+				const labelGroup = itemEl.createDiv({ cls: "prayer_label_group" });
+				const iconEl = labelGroup.createSpan({ cls: "prayer_icon" });
 				setIcon(iconEl, PRAYER_ICONS[item.key]);
-				titleWrapper.createEl("span", { text: item.label, cls: "prayer_title" });
-				itemEl.createEl("p", { text: item.time, cls: "prayer_value" });
+
+				labelGroup.createSpan({ text: item.label, cls: "prayer_name" });
+				itemEl.createSpan({ text: item.time, cls: "prayer_time" });
 			}
+
 			this.updateItemStatuses();
-		} catch {
-			this.headingEl.setText("اوقات شرعی");
-			this.statusEl.setText("اوقات شرعی یافت نشد.");
-			this.listEl.empty();
-		}
+		});
 	}
 
 	private updateItemStatuses(): void {
-		if (!this.listEl) return;
+		if (!this.lastCalculatedTimes) return;
+
 		const now = Date.now();
-		const children = this.listEl.children;
-		for (let i = 0; i < children.length; i++) {
-			const el = children[i] as HTMLElement;
-			const key = el.getAttribute("data-key");
-			const item = this.currentItems.find(x => x.key === key);
-			if (!item) continue;
+		// Convert setting minutes to milliseconds dynamically
+		const warningMs = (this.plugin.settings.warningIntervalMinutes ?? 10) * 60 * 1000;
+		const activeThresholdMs = 2 * 60 * 1000;
 
-			const diffMins = (item.timestamp - now) / 60000;
-			el.removeClass("past", "now", "approaching");
+		for (const item of this.lastCalculatedTimes.items) {
+			const itemEl = this.itemElements.get(item.key);
+			if (!itemEl) continue;
 
-			if (diffMins > 0 && diffMins <= 10) {
-				// 10 minutes before prayer time
-				el.addClass("approaching");
-			} else if (diffMins <= 0 && diffMins >= -5) {
-				// Prayer time reached (up to 5 mins after)
-				el.addClass("now");
-			} else if (diffMins < -5) {
-				// Prayer time passed
-				el.addClass("past");
+			itemEl.removeClass("past", "approaching", "now", "upcoming");
+
+			const diff = item.timestamp - now;
+
+			if (diff < -activeThresholdMs) {
+				itemEl.addClass("past");
+			} else if (diff >= -activeThresholdMs && diff <= activeThresholdMs) {
+				itemEl.addClass("now");
+			} else if (diff > activeThresholdMs && diff <= warningMs) {
+				itemEl.addClass("approaching");
+			} else {
+				itemEl.addClass("upcoming");
 			}
+		}
+	}
+
+	private startTimer(): void {
+		this.stopTimer();
+		// Update status classes every 10 seconds
+		this.timerId = window.setInterval(() => this.updateItemStatuses(), 10000);
+	}
+
+	private stopTimer(): void {
+		if (this.timerId !== null) {
+			window.clearInterval(this.timerId);
+			this.timerId = null;
 		}
 	}
 }
 
-class PrayerChimeSettingsTab extends PluginSettingTab {
-	constructor(app: App, private readonly plugin: PrayerChimePlugin) {
-		super(app, plugin);
-	}
+class PrayerChimeSettingTab extends PluginSettingTab {
+	private readonly plugin: PrayerChimePlugin;
 
-	getSettingDefinitions(): unknown[] {
-		return [];
+	constructor(app: App, plugin: PrayerChimePlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
 	}
 
 	display(): void {
-		void this.displayAsync();
-	}
-
-	private async displayAsync(): Promise<void> {
 		const { containerEl } = this;
 		containerEl.empty();
-		for (const [key, value] of Object.entries(DEFAULT_SETTINGS.displayedTimes) as [PrayerKey, typeof DEFAULT_SETTINGS.displayedTimes[PrayerKey]][]) {
-			new Setting(containerEl).setName(`نمایش ${value.text}`).setClass("setting_toggle").addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.displayedTimes[key]?.display ?? false);
-				toggle.onChange(async (enabled) => {
-					this.plugin.settings.displayedTimes[key].display = enabled;
-					await this.plugin.saveSettings();
-				});
+
+		containerEl.createEl("h2", { text: "تنظیمات PrayerChime" });
+
+		// Warning interval setting dropdown
+		new Setting(containerEl)
+			.setName("بازه زمانی هشدار")
+			.setDesc("مدت زمان پیش از اذان برای تغییر وضعیت به 'در حال نزدیک شدن'")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("5", "۵ دقیقه")
+					.addOption("10", "۱۰ دقیقه (پیش‌فرض)")
+					.addOption("15", "۱۵ دقیقه")
+					.addOption("30", "۳۰ دقیقه")
+					.setValue(String(this.plugin.settings.warningIntervalMinutes ?? 10))
+					.onChange(async (value) => {
+						const parsed = parseInt(value, 10);
+						this.plugin.settings.warningIntervalMinutes = isNaN(parsed) ? 10 : parsed;
+						await this.plugin.saveSettings();
+					});
 			});
+
+		// Displayed items toggle list
+		containerEl.createEl("h3", { text: "نمایش اوقات شرعی" });
+
+		for (const key of Object.keys(DEFAULT_SETTINGS.displayedTimes) as PrayerKey[]) {
+			const itemSetting = this.plugin.settings.displayedTimes[key];
+			if (!itemSetting) continue;
+
+			new Setting(containerEl)
+				.setName(itemSetting.text)
+				.addToggle((toggle) => {
+					toggle.setValue(itemSetting.display).onChange(async (value) => {
+						itemSetting.display = value;
+						await this.plugin.saveSettings();
+					});
+				});
 		}
-		containerEl.createEl("hr");
-		new Setting(containerEl).setName("انتخاب شهر").setClass("text_center").setHeading();
-		const searchBox = containerEl.createEl("input", { type: "text", placeholder: "شهر مورد نظر را جستجو کنید...", cls: "search-box" });
+
+		// City selector section
+		containerEl.createEl("h3", { text: "انتخاب شهر" });
+
+		const searchBox = containerEl.createEl("input", { type: "text", placeholder: "جستجوی شهر یا استان...", cls: "search-box" });
 		const cityContainer = containerEl.createDiv({ cls: "province-container" });
 		const cityList = cityContainer.createEl("ul", { cls: "province-list" });
-		const cities = await this.plugin.cities.getCities();
-		cityList.addEventListener("click", (event: MouseEvent) => {
-			const target = event.target as HTMLElement | null;
-			const listItem = target?.closest<HTMLLIElement>("li[data-city-id]");
-			const cityId = listItem?.getAttribute("data-city-id");
-			if (cityId) {
-				void this.plugin.selectCity(cityId).then(() => {
-					renderCities(searchBox.value.trim());
-				});
-			}
-		});
-		let frame = 0;
-		const renderCities = (filter: string): void => {
-			if (frame) {
-				window.cancelAnimationFrame(frame);
-			}
-			frame = window.requestAnimationFrame(() => {
-				cityList.empty();
-				const filtered = this.plugin.cities.search(cities, filter, SEARCH_LIMIT);
-				for (const city of filtered) {
-					const item = cityList.createEl("li", {
-						text: city.province === city.city ? city.city : `${city.city}، ${city.province}`,
-						attr: { "data-city-id": city.id },
+
+		void this.plugin.cities.getCities().then((cities) => {
+			cityList.addEventListener("click", (event: MouseEvent) => {
+				const target = event.target as HTMLElement | null;
+				const listItem = target?.closest<HTMLLIElement>("li[data-city-id]");
+				const cityId = listItem?.getAttribute("data-city-id");
+				if (cityId) {
+					void this.plugin.selectCity(cityId).then(() => {
+						renderCities(searchBox.value.trim());
 					});
-					if (city.id === this.plugin.settings.selectedCityId) {
-						item.addClass("selected");
-					}
-				}
-				if (filtered.length === 0) {
-					cityList.createEl("li", { text: "هیچ شهری یافت نشد.", cls: "no-results" });
 				}
 			});
-		};
-		searchBox.addEventListener("input", () => renderCities(searchBox.value.trim()));
-		renderCities("");
+
+			let frame = 0;
+			const renderCities = (filter: string): void => {
+				if (frame) {
+					window.cancelAnimationFrame(frame);
+				}
+				frame = window.requestAnimationFrame(() => {
+					cityList.empty();
+					const filtered = this.plugin.cities.search(cities, filter, SEARCH_LIMIT);
+					for (const city of filtered) {
+						const item = cityList.createEl("li", {
+							text: city.province === city.city ? city.city : `${city.city}، ${city.province}`,
+							attr: { "data-city-id": city.id },
+						});
+						if (city.id === this.plugin.settings.selectedCityId) {
+							item.addClass("selected");
+						}
+					}
+				});
+			};
+
+			searchBox.addEventListener("input", () => {
+				renderCities(searchBox.value.trim());
+			});
+
+			renderCities("");
+		});
 	}
 }

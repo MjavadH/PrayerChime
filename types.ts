@@ -29,6 +29,7 @@ export interface PrayerChimeSettings {
 	selectedCity?: string;
 	selectedprovinceCode?: string;
 	displayedTimes: Record<PrayerKey, PrayerDisplaySetting>;
+	warningIntervalMinutes: number; // Warning time offset in minutes before prayer time
 }
 
 export interface PrayerTimeItem {
