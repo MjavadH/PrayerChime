@@ -30,12 +30,15 @@ const DEFAULT_SETTINGS: PrayerChimeSettings = {
 		midnight: { display: true, text: "نیمه‌شب شرعی" },
 	},
 	warningIntervalMinutes: 10,
+	showStatusBar: true,
 };
 
 export default class PrayerChimePlugin extends Plugin {
 	settings: PrayerChimeSettings = DEFAULT_SETTINGS;
 	readonly cities = new CityService();
 	readonly prayer = new PrayerService();
+
+	private statusBarEl: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -51,6 +54,20 @@ export default class PrayerChimePlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			void this.initDefaultCity();
 		});
+
+		// Initialize Status Bar if enabled
+		if (this.settings.showStatusBar) {
+			this.initStatusBar();
+		}
+
+		// Register periodic UI updates (Managed safely by Obsidian's lifecycle)
+		this.registerInterval(
+			window.setInterval(() => {
+				if (this.settings.showStatusBar) {
+					void this.updateStatusBar();
+				}
+			}, 60000)
+		);
 	}
 
 	async loadSettings(): Promise<void> {
@@ -60,6 +77,9 @@ export default class PrayerChimePlugin extends Plugin {
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 		this.updateViews();
+		if (this.settings.showStatusBar) {
+			void this.updateStatusBar();
+		}
 	}
 
 	async activateView(): Promise<void> {
@@ -91,6 +111,49 @@ export default class PrayerChimePlugin extends Plugin {
 	async selectCity(cityId: string): Promise<void> {
 		this.settings.selectedCityId = cityId;
 		await this.saveSettings();
+	}
+
+	initStatusBar(): void {
+		if (!this.statusBarEl) {
+			this.statusBarEl = this.addStatusBarItem();
+		}
+		void this.updateStatusBar();
+	}
+
+	removeStatusBar(): void {
+		if (this.statusBarEl) {
+			this.statusBarEl.remove();
+			this.statusBarEl = null;
+		}
+	}
+
+	private async updateStatusBar(): Promise<void> {
+		if (!this.settings.showStatusBar || !this.statusBarEl) return;
+
+		try {
+			const cities = await this.cities.getCities();
+			const city = cities.find((c) => c.id === this.settings.selectedCityId) ?? this.cities.getTehran(cities);
+			const calculated = this.prayer.calculate(city, this.settings);
+			const now = Date.now();
+
+			let nextPrayer: PrayerTimeItem | undefined;
+
+			// Find the first upcoming prayer time
+			for (const item of calculated.items) {
+				if (item.timestamp > now) {
+					nextPrayer = item;
+					break;
+				}
+			}
+
+			if (nextPrayer) {
+				this.statusBarEl.setText(`🕌 بعدی: ${nextPrayer.label} ${nextPrayer.time}`);
+			} else {
+				this.statusBarEl.setText(`🕌 پایان اوقات امروز`);
+			}
+		} catch (error) {
+			console.error("PrayerChime: Failed to update status bar", error);
+		}
 	}
 
 	private async initDefaultCity(): Promise<void> {
@@ -180,7 +243,6 @@ class PrayerTimesView extends ItemView {
 		if (!this.lastCalculatedTimes) return;
 
 		const now = Date.now();
-		// Convert setting minutes to milliseconds dynamically
 		const warningMs = (this.plugin.settings.warningIntervalMinutes ?? 10) * 60 * 1000;
 		const activeThresholdMs = 2 * 60 * 1000;
 
@@ -206,7 +268,6 @@ class PrayerTimesView extends ItemView {
 
 	private startTimer(): void {
 		this.stopTimer();
-		// Update status classes every 10 seconds
 		this.timerId = window.setInterval(() => this.updateItemStatuses(), 10000);
 	}
 
@@ -232,7 +293,25 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 
 		containerEl.createEl("h2", { text: "تنظیمات PrayerChime" });
 
-		// Warning interval setting dropdown
+		// General Settings Section
+		containerEl.createEl("h3", { text: "تنظیمات عمومی" });
+
+		new Setting(containerEl)
+			.setName("نمایش در نوار وضعیت (Status Bar)")
+			.setDesc("نمایش زمان اذان/اوقات شرعی بعدی در نوار پایین صفحه")
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.showStatusBar).onChange(async (value) => {
+					this.plugin.settings.showStatusBar = value;
+					await this.plugin.saveSettings();
+
+					if (value) {
+						this.plugin.initStatusBar();
+					} else {
+						this.plugin.removeStatusBar();
+					}
+				});
+			});
+
 		new Setting(containerEl)
 			.setName("بازه زمانی هشدار")
 			.setDesc("مدت زمان پیش از اذان برای تغییر وضعیت به 'در حال نزدیک شدن'")
