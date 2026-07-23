@@ -1,7 +1,7 @@
 {
 	"id": "prayer-chime",
 	"name": "PrayerChime",
-	"version": "1.1.0",
+	"version": "2.0.0",
 	"minAppVersion": "1.5.0",
 	"description": "Offline prayer times for Iranian cities using local city data.",
 	"author": "MjavadH",
