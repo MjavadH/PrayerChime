@@ -1,235 +1,486 @@
-.prayer-chime-view {
+.prayer-chime-view,
+.prayer-chime-settings {
+	--pc-radius-sm: 8px;
+	--pc-radius-md: 12px;
+	--pc-radius-lg: 16px;
+	--pc-gap: 10px;
+	--pc-accent: var(--interactive-accent);
+	--pc-accent-soft: color-mix(in oklab, var(--interactive-accent) 12%, transparent);
+	--pc-warn: #f59e0b;
+	--pc-now: #10b981;
+	--pc-surface: var(--background-primary);
+	--pc-surface-2: var(--background-secondary);
+	--pc-border: var(--background-modifier-border);
+	--pc-border-strong: var(--background-modifier-border-hover);
+	--pc-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 	direction: rtl;
-	padding: 4px 2px 16px;
 	font-family: var(--font-interface);
 }
 
-.prayer-chime-view h3.text_center {
-	text-align: center;
-	font-size: 0.78em;
+.prayer-chime-view {
+	padding: 14px 12px 20px;
+}
+
+.pc-header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 16px;
+	margin-bottom: 14px;
+	background: linear-gradient(
+		135deg,
+		color-mix(in oklab, var(--pc-accent) 10%, var(--pc-surface)) 0%,
+		var(--pc-surface) 100%
+	);
+	border: 1px solid var(--pc-border);
+	border-radius: var(--pc-radius-lg);
+	animation: pc-fade-down 0.4s var(--pc-ease) both;
+}
+
+.pc-header__top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.pc-header__title-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.pc-header__eyebrow {
+	font-size: 0.72em;
 	font-weight: 500;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.12em;
 	text-transform: uppercase;
 	color: var(--text-muted);
-	margin: 6px 0 18px;
+}
+
+.pc-header__title {
+	margin: 0;
+	font-size: 1.15em;
+	font-weight: 700;
+	color: var(--text-normal);
+	line-height: 1.25;
+}
+
+.pc-header__refresh {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	background: color-mix(in oklab, var(--pc-accent) 8%, transparent);
+	color: var(--pc-accent);
+	border: 1px solid color-mix(in oklab, var(--pc-accent) 25%, transparent);
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background 0.2s var(--pc-ease), transform 0.2s var(--pc-ease),
+	border-color 0.2s var(--pc-ease);
+}
+
+.pc-header__refresh:hover {
+	background: color-mix(in oklab, var(--pc-accent) 18%, transparent);
+	border-color: color-mix(in oklab, var(--pc-accent) 45%, transparent);
+	transform: rotate(-15deg);
+}
+
+.pc-header__refresh:active {
+	transform: scale(0.92);
+}
+
+.pc-header__refresh .svg-icon {
+	width: 15px;
+	height: 15px;
+}
+
+.pc-header__refresh.is-spinning .svg-icon {
+	animation: pc-spin 0.6s var(--pc-ease);
+}
+
+@keyframes pc-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+.pc-header__date {
+	margin-top: 4px;
+	font-size: 0.82em;
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.pc-header__next {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px dashed var(--pc-border);
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.pc-header__next-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.pc-header__next-label {
+	font-size: 0.82em;
+	color: var(--text-muted);
+}
+
+.pc-header__next-value {
+	font-size: 1em;
+	font-weight: 700;
+	color: var(--pc-accent);
+	font-variant-numeric: tabular-nums;
+}
+
+.pc-header__next-countdown {
+	font-size: 0.82em;
+	color: var(--text-normal);
+	font-weight: 500;
 	opacity: 0.85;
 }
 
-.prayer_times_list {
+.pc-list {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
-	padding: 4px 2px;
 }
 
-.prayer_item {
+.pc-item {
 	position: relative;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 12px 16px;
-	background: var(--background-primary);
-	border-radius: 10px;
-	border: 1px solid var(--background-modifier-border);
+	padding: 11px 14px 11px 12px;
+	background: var(--pc-surface);
+	border: 1px solid var(--pc-border);
+	border-radius: var(--pc-radius-md);
 	overflow: hidden;
-	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease-in-out, border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out, opacity 0.4s ease;
-	animation: prayer-slide-in 0.35s ease both;
+	opacity: 0;
+	transform: translateY(6px);
+	animation: pc-item-in 0.35s var(--pc-ease) forwards;
+	transition:
+		transform 0.35s var(--pc-ease),
+		background 0.4s ease,
+		border-color 0.4s ease,
+		box-shadow 0.4s ease,
+		opacity 0.35s ease;
 }
 
-.prayer_item::before {
+/* Stagger up to 8 items */
+.pc-item:nth-child(1) { animation-delay: 0.02s; }
+.pc-item:nth-child(2) { animation-delay: 0.06s; }
+.pc-item:nth-child(3) { animation-delay: 0.10s; }
+.pc-item:nth-child(4) { animation-delay: 0.14s; }
+.pc-item:nth-child(5) { animation-delay: 0.18s; }
+.pc-item:nth-child(6) { animation-delay: 0.22s; }
+.pc-item:nth-child(7) { animation-delay: 0.26s; }
+.pc-item:nth-child(8) { animation-delay: 0.30s; }
+
+.pc-item::before {
 	content: "";
 	position: absolute;
-	inset: 0 auto 0 0;
+	top: 0;
+	bottom: 0;
+	right: 0;
 	width: 3px;
-	background: var(--background-modifier-border);
-	transition: background 0.25s ease, width 0.25s ease;
+	background: var(--pc-border);
+	transition: background 0.3s ease, width 0.3s ease, box-shadow 0.3s ease;
 }
 
-.prayer_item:hover {
-	transform: translateX(-2px);
-	border-color: var(--background-modifier-border-hover);
-	background: var(--background-secondary);
+.pc-item:hover {
+	transform: translateX(2px);
+	border-color: var(--pc-border-strong);
+	background: var(--pc-surface-2);
 }
 
-.prayer_title_wrapper {
+.pc-item__left {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	min-width: 0;
 }
 
-.prayer_icon {
+.pc-item__icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 28px;
-	height: 28px;
-	border-radius: 8px;
+	width: 30px;
+	height: 30px;
+	border-radius: var(--pc-radius-sm);
 	color: var(--text-muted);
 	background: var(--background-modifier-hover);
 	transition: color 0.25s ease, background 0.25s ease, transform 0.25s ease;
 	flex-shrink: 0;
 }
 
-.prayer_icon svg {
-	width: 15px;
-	height: 15px;
+.pc-item__icon svg {
+	width: 16px;
+	height: 16px;
 }
 
-.prayer_item:hover .prayer_icon {
-	transform: scale(1.05);
+.pc-item:hover .pc-item__icon {
+	transform: scale(1.06);
 }
 
-.prayer_title {
-	font-size: 0.88em;
+.pc-item__label {
+	font-size: 0.9em;
 	font-weight: 500;
 	color: var(--text-normal);
-	margin: 0;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-.prayer_value {
+.pc-item__time {
 	font-size: 0.95em;
 	font-weight: 600;
 	color: var(--text-normal);
 	font-variant-numeric: tabular-nums;
 	letter-spacing: 0.02em;
-	margin: 0;
 	direction: ltr;
 }
 
-.prayer_item.past {
+.pc-item.is-past {
 	opacity: 0.45;
 	background: transparent;
 }
+.pc-item.is-past .pc-item__icon { background: transparent; }
+.pc-item.is-past::before { background: var(--text-faint); }
 
-.prayer_item.past .prayer_icon {
-	background: transparent;
+.pc-item.is-approaching {
+	background: color-mix(in oklab, var(--pc-warn) 8%, var(--pc-surface));
+	border-color: color-mix(in oklab, var(--pc-warn) 35%, var(--pc-border));
+}
+.pc-item.is-approaching::before {
+	background: var(--pc-warn);
+	box-shadow: -6px 0 14px color-mix(in oklab, var(--pc-warn) 55%, transparent);
+}
+.pc-item.is-approaching .pc-item__icon {
+	color: var(--pc-warn);
+	background: color-mix(in oklab, var(--pc-warn) 16%, transparent);
+	animation: pc-pulse 2.4s ease-in-out infinite;
 }
 
-.prayer_item.past::before {
-	background: var(--text-faint);
+.pc-item.is-now {
+	background: color-mix(in oklab, var(--pc-now) 12%, var(--pc-surface));
+	border-color: color-mix(in oklab, var(--pc-now) 45%, var(--pc-border));
+	box-shadow: 0 6px 22px -8px color-mix(in oklab, var(--pc-now) 45%, transparent);
 }
-
-.prayer_item.approaching {
-	background: color-mix(in oklab, var(--color-orange, #f59e0b) 8%, var(--background-primary));
-	border-color: color-mix(in oklab, var(--color-orange, #f59e0b) 35%, var(--background-modifier-border));
-}
-
-.prayer_item.approaching::before {
-	width: 3px;
-	background: var(--color-orange, #f59e0b);
-	box-shadow: 0 0 12px color-mix(in oklab, var(--color-orange, #f59e0b) 60%, transparent);
-}
-
-.prayer_item.approaching .prayer_icon {
-	color: var(--color-orange, #f59e0b);
-	background: color-mix(in oklab, var(--color-orange, #f59e0b) 15%, transparent);
-	animation: prayer-pulse 2.4s ease-in-out infinite;
-}
-
-.prayer_item.now {
-	background: color-mix(in oklab, var(--color-green, #10b981) 12%, var(--background-primary));
-	border-color: color-mix(in oklab, var(--color-green, #10b981) 45%, var(--background-modifier-border));
-	box-shadow: 0 4px 20px -6px color-mix(in oklab, var(--color-green, #10b981) 40%, transparent);
-	animation: prayer-state-now 0.8s ease-out forwards;
-}
-
-@keyframes prayer-state-now {
-	0% {
-		background: color-mix(in oklab, var(--color-orange, #f59e0b) 15%, var(--background-primary));
-		transform: scale(0.98);
-	}
-	50% {
-		background: color-mix(in oklab, var(--color-green, #10b981) 25%, var(--background-primary));
-		transform: scale(1.02);
-	}
-	100% {
-		background: color-mix(in oklab, var(--color-green, #10b981) 12%, var(--background-primary));
-		transform: scale(1);
-	}
-}
-
-.prayer_item.now::before {
+.pc-item.is-now::before {
 	width: 4px;
-	background: var(--color-green, #10b981);
+	background: var(--pc-now);
+	box-shadow: -6px 0 16px color-mix(in oklab, var(--pc-now) 60%, transparent);
+}
+.pc-item.is-now .pc-item__icon {
+	color: var(--pc-now);
+	background: color-mix(in oklab, var(--pc-now) 18%, transparent);
+}
+.pc-item.is-now .pc-item__label,
+.pc-item.is-now .pc-item__time {
+	font-weight: 700;
 }
 
-.prayer_item.now .prayer_icon {
-	color: var(--color-green, #10b981);
-	background: color-mix(in oklab, var(--color-green, #10b981) 18%, transparent);
-}
-
-.prayer_item.now .prayer_title,
-.prayer_item.now .prayer_value {
-	color: var(--text-normal);
-	font-weight: 600;
-}
-
-@keyframes prayer-slide-in {
-	from { opacity: 0; transform: translateY(6px); }
-	to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes prayer-pulse {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.6; }
-}
-
-.prayer-chime-status,
-.text_center {
+.pc-empty {
+	padding: 22px 12px;
 	text-align: center;
-}
-
-.prayer-chime-status {
 	color: var(--text-muted);
-	font-size: 0.88em;
-	padding: 4px 0;
-	min-height: 1em;
+	font-size: 0.9em;
+	border: 1px dashed var(--pc-border);
+	border-radius: var(--pc-radius-md);
 }
 
-.update-province-button {
-	direction: rtl;
+.prayer-chime-settings .pc-settings-header {
+	margin: 4px 0 18px;
+	padding: 14px 16px;
+	background: linear-gradient(
+		135deg,
+		color-mix(in oklab, var(--pc-accent) 12%, var(--pc-surface)) 0%,
+		var(--pc-surface) 100%
+	);
+	border: 1px solid var(--pc-border);
+	border-radius: var(--pc-radius-lg);
+	animation: pc-fade-down 0.35s var(--pc-ease) both;
+}
+
+.prayer-chime-settings .pc-settings-header h2 {
+	margin: 0 0 4px;
+	font-size: 1.2em;
+	font-weight: 700;
+	color: var(--text-normal);
+}
+
+.prayer-chime-settings .pc-settings-header p {
+	margin: 0;
+	font-size: 0.85em;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.prayer-chime-settings .pc-section {
+	margin: 18px 0 8px;
+	padding: 8px 0 4px;
+	border-top: 1px solid var(--pc-border);
 	display: flex;
 	align-items: center;
+	gap: 8px;
+}
+
+.prayer-chime-settings .pc-section__icon {
+	display: inline-flex;
+	align-items: center;
 	justify-content: center;
-	gap: 6px;
-	margin: 22px auto 4px;
-	padding: 8px 18px;
-	background: transparent;
-	color: var(--text-muted);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	cursor: pointer;
-	font-size: 0.82em;
-	font-weight: 500;
-	letter-spacing: 0.02em;
-	transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+	width: 24px;
+	height: 24px;
+	border-radius: 6px;
+	background: var(--pc-accent-soft);
+	color: var(--pc-accent);
 }
 
-.update-province-button:hover {
+.prayer-chime-settings .pc-section__icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.prayer-chime-settings .pc-section__title {
+	margin: 0;
+	font-size: 0.95em;
+	font-weight: 600;
 	color: var(--text-normal);
-	border-color: var(--interactive-accent);
-	background: color-mix(in oklab, var(--interactive-accent) 8%, transparent);
 }
 
-.update-province-button:active {
-	transform: scale(0.97);
+.prayer-chime-settings .pc-city-picker {
+	margin-top: 8px;
+	padding: 14px;
+	background: var(--pc-surface);
+	border: 1px solid var(--pc-border);
+	border-radius: var(--pc-radius-lg);
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
-.province-container {
+.prayer-chime-settings .pc-favorites {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.prayer-chime-settings .pc-favorites.is-empty {
+	display: none;
+}
+
+.prayer-chime-settings .pc-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px 5px 6px;
+	background: var(--pc-surface-2);
+	border: 1px solid var(--pc-border);
+	border-radius: 999px;
+	font-size: 0.85em;
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+	animation: pc-fade-in 0.25s var(--pc-ease) both;
+}
+
+.prayer-chime-settings .pc-chip:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--pc-border-strong);
+	transform: translateY(-1px);
+}
+
+.prayer-chime-settings .pc-chip.is-selected {
+	background: var(--pc-accent);
+	color: var(--text-on-accent);
+	border-color: var(--pc-accent);
+}
+
+.prayer-chime-settings .pc-chip__remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	opacity: 0.6;
+	transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.prayer-chime-settings .pc-chip__remove:hover {
+	opacity: 1;
+	background: color-mix(in oklab, currentColor 15%, transparent);
+}
+
+.prayer-chime-settings .pc-chip__remove svg {
+	width: 11px;
+	height: 11px;
+}
+
+.prayer-chime-settings .pc-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.prayer-chime-settings .pc-search__icon {
+	position: absolute;
+	right: 12px;
+	display: inline-flex;
+	color: var(--text-faint);
+	pointer-events: none;
+}
+
+.prayer-chime-settings .pc-search__icon svg {
+	width: 15px;
+	height: 15px;
+}
+
+.prayer-chime-settings .pc-search input {
+	width: 100%;
+	padding: 10px 36px 10px 14px;
+	border: 1px solid var(--pc-border);
+	background: var(--pc-surface-2);
+	color: var(--text-normal);
+	border-radius: var(--pc-radius-md);
+	box-sizing: border-box;
+	font-size: 0.92em;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.prayer-chime-settings .pc-search input:focus {
+	outline: none;
+	border-color: var(--pc-accent);
+	background: var(--pc-surface);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--pc-accent) 20%, transparent);
+}
+
+.prayer-chime-settings .pc-search input::placeholder {
+	color: var(--text-faint);
+}
+
+.prayer-chime-settings .pc-city-list-wrap {
 	max-height: 320px;
 	overflow-y: auto;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
+	border: 1px solid var(--pc-border);
+	background: var(--pc-surface);
 	padding: 6px;
-	border-radius: 10px;
+	border-radius: var(--pc-radius-md);
 	box-sizing: border-box;
 }
 
-.province-list {
+.prayer-chime-settings .pc-city-list {
 	list-style: none;
 	padding: 0;
 	margin: 0;
@@ -238,73 +489,118 @@
 	gap: 2px;
 }
 
-.province-list li {
+.prayer-chime-settings .pc-city-list li {
 	margin: 0;
-	padding: 10px 14px;
-	border-radius: 7px;
+	padding: 9px 12px;
+	border-radius: var(--pc-radius-sm);
 	cursor: pointer;
 	font-size: 0.92em;
 	color: var(--text-normal);
-	transition: background 0.15s ease, color 0.15s ease, padding-right 0.2s ease;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transition: background 0.15s ease, color 0.15s ease, padding 0.2s ease;
 }
 
-.province-list li:hover {
+.prayer-chime-settings .pc-city-list li:hover {
 	background: var(--background-modifier-hover);
-	padding-right: 18px;
+	padding-right: 16px;
 }
 
-.province-list li.selected {
-	background: var(--interactive-accent);
+.prayer-chime-settings .pc-city-list li.is-selected {
+	background: var(--pc-accent);
 	color: var(--text-on-accent);
 	font-weight: 600;
 }
 
-.province-list li.selected:hover {
+.prayer-chime-settings .pc-city-list li.is-selected:hover {
 	background: var(--interactive-accent-hover);
 }
 
-.search-box {
-	width: 100%;
-	padding: 10px 14px;
-	margin-bottom: 12px;
-	border: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
-	color: var(--text-normal);
-	border-radius: 8px;
-	box-sizing: border-box;
-	font-size: 0.92em;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.search-box:focus {
-	outline: none;
-	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 3px color-mix(in oklab, var(--interactive-accent) 20%, transparent);
-}
-
-.search-box::placeholder {
-	color: var(--text-faint);
-}
-
-.no-results {
-	color: var(--text-faint);
+.prayer-chime-settings .pc-city-list .pc-no-results {
+	padding: 22px 10px;
 	text-align: center;
-	padding: 20px 10px;
-	cursor: default;
+	color: var(--text-faint);
 	font-size: 0.9em;
+	cursor: default;
 }
 
-.province-list li.no-results:hover {
+.prayer-chime-settings .pc-city-list .pc-no-results:hover {
 	background: transparent;
 	padding-right: 10px;
 }
 
-.setting_toggle {
-	direction: rtl;
-	text-align: right;
+.prayer-chime-settings .pc-star {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 6px;
+	color: var(--text-muted);
+	opacity: 0.35;
+	transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
 }
 
-.setting_toggle .setting-item-name {
-	font-weight: 500;
-	font-size: 0.95em;
+.prayer-chime-settings .pc-star svg {
+	width: 15px;
+	height: 15px;
+}
+
+.prayer-chime-settings .pc-city-list li:hover .pc-star {
+	opacity: 0.85;
+}
+
+.prayer-chime-settings .pc-star:hover {
+	transform: scale(1.15);
+	background: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+.prayer-chime-settings .pc-star.is-active {
+	opacity: 1;
+	color: #f59e0b;
+}
+
+.prayer-chime-settings .pc-star.is-active svg {
+	fill: #f59e0b;
+}
+
+.prayer-chime-settings .pc-city-list li.is-selected .pc-star,
+.prayer-chime-settings .pc-city-list li.is-selected .pc-star.is-active {
+	color: var(--text-on-accent);
+	opacity: 1;
+}
+
+.prayer-chime-settings .pc-city-list li.is-selected .pc-star.is-active svg {
+	fill: var(--text-on-accent);
+}
+
+/* Animations */
+@keyframes pc-item-in {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pc-fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes pc-fade-down {
+	from { opacity: 0; transform: translateY(-4px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pc-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.prayer-chime-view *,
+	.prayer-chime-settings * {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+	}
 }

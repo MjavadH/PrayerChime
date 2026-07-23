@@ -1,7 +1,22 @@
-import { App, ItemView, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, setIcon, type IconName } from "obsidian";
+import {
+	App,
+	ItemView,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	WorkspaceLeaf,
+	setIcon,
+	type IconName,
+} from "obsidian";
 import { CityService } from "./city-service";
 import { PrayerService } from "./prayer-service";
-import type { CalculatedPrayerTimes, PrayerChimeSettings, PrayerKey, PrayerTimeItem } from "./types";
+import type {
+	CalculatedPrayerTimes,
+	City,
+	PrayerChimeSettings,
+	PrayerKey,
+	PrayerTimeItem,
+} from "./types";
 
 const VIEW_TYPE_PRAYER_TIMES = "prayer-times-view";
 const SEARCH_LIMIT = 80;
@@ -32,6 +47,7 @@ const DEFAULT_SETTINGS: PrayerChimeSettings = {
 	warningIntervalMinutes: 10,
 	showStatusBar: true,
 	calculationMethod: "Tehran",
+	favoriteCityIds: [],
 };
 
 export default class PrayerChimePlugin extends Plugin {
@@ -56,18 +72,16 @@ export default class PrayerChimePlugin extends Plugin {
 			void this.initDefaultCity();
 		});
 
-		// Initialize Status Bar if enabled
 		if (this.settings.showStatusBar) {
 			this.initStatusBar();
 		}
 
-		// Register periodic UI updates (Managed safely by Obsidian's lifecycle)
 		this.registerInterval(
 			window.setInterval(() => {
 				if (this.settings.showStatusBar) {
 					void this.updateStatusBar();
 				}
-			}, 60000)
+			}, 60000),
 		);
 	}
 
@@ -133,13 +147,13 @@ export default class PrayerChimePlugin extends Plugin {
 
 		try {
 			const cities = await this.cities.getCities();
-			const city = cities.find((c) => c.id === this.settings.selectedCityId) ?? this.cities.getTehran(cities);
+			const city =
+				cities.find((c) => c.id === this.settings.selectedCityId) ??
+				this.cities.getTehran(cities);
 			const calculated = this.prayer.calculate(city, this.settings);
 			const now = Date.now();
 
 			let nextPrayer: PrayerTimeItem | undefined;
-
-			// Find the first upcoming prayer time
 			for (const item of calculated.items) {
 				if (item.timestamp > now) {
 					nextPrayer = item;
@@ -160,19 +174,36 @@ export default class PrayerChimePlugin extends Plugin {
 	private async initDefaultCity(): Promise<void> {
 		const cities = await this.cities.getCities();
 
-		if (!this.settings.selectedCityId || !cities.some((city) => city.id === this.settings.selectedCityId)) {
+		if (
+			!this.settings.selectedCityId ||
+			!cities.some((city) => city.id === this.settings.selectedCityId)
+		) {
 			const defaultCity = this.cities.getTehran(cities);
 			this.settings.selectedCityId = defaultCity.id;
 			await this.saveSettings();
 		}
 	}
+
+	async toggleFavoriteCity(cityId: string): Promise<void> {
+		const index = this.settings.favoriteCityIds.indexOf(cityId);
+		if (index > -1) {
+			this.settings.favoriteCityIds.splice(index, 1);
+		} else {
+			this.settings.favoriteCityIds.push(cityId);
+		}
+		await this.saveSettings();
+	}
 }
 
+/* VIEW */
 class PrayerTimesView extends ItemView {
 	private readonly plugin: PrayerChimePlugin;
 	private timerId: number | null = null;
 	private lastCalculatedTimes: CalculatedPrayerTimes | null = null;
 	private itemElements: Map<PrayerKey, HTMLElement> = new Map();
+	private nextValueEl: HTMLElement | null = null;
+	private nextLabelEl: HTMLElement | null = null;
+	private nextCountdownEl: HTMLElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PrayerChimePlugin) {
 		super(leaf);
@@ -205,35 +236,82 @@ class PrayerTimesView extends ItemView {
 	}
 
 	private render(): void {
-		const container = this.containerEl.children[1];
+		const container = this.containerEl.children[1] as HTMLElement | undefined;
 		if (!container) return;
 
 		container.empty();
 		container.addClass("prayer-chime-view");
 
 		void this.plugin.cities.getCities().then((cities) => {
-			const city = cities.find((c) => c.id === this.plugin.settings.selectedCityId) ?? this.plugin.cities.getTehran(cities);
+			const city =
+				cities.find((c) => c.id === this.plugin.settings.selectedCityId) ??
+				this.plugin.cities.getTehran(cities);
 			const calculated = this.plugin.prayer.calculate(city, this.plugin.settings);
 			this.lastCalculatedTimes = calculated;
 
-			const titleEl = container.createEl("h3", {
-				text: `اوقات شرعی ${city.city}`,
-				cls: "text_center",
+			/* Header */
+			const header = container.createDiv({ cls: "pc-header" });
+
+			const topRow = header.createDiv({ cls: "pc-header__top" });
+			const titleWrap = topRow.createDiv({ cls: "pc-header__title-wrap" });
+			titleWrap.createDiv({ cls: "pc-header__eyebrow", text: "اوقات شرعی" });
+			titleWrap.createEl("h3", {
+				cls: "pc-header__title",
+				text: city.city,
 			});
 
-			const listEl = container.createDiv({ cls: "prayer_times_list" });
+			const refreshBtn = topRow.createEl("button", {
+				cls: "pc-header__refresh",
+				attr: { type: "button", "aria-label": "به‌روزرسانی" },
+			});
+			setIcon(refreshBtn, "refresh-cw");
+			this.registerDomEvent(refreshBtn, "click", () => {
+				refreshBtn.addClass("is-spinning");
+				this.refresh();
+				window.setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
+			});
+
+			header.createDiv({
+				cls: "pc-header__date",
+				text: this.formatTodayPersian(),
+			});
+
+			const nextWrap = header.createDiv({ cls: "pc-header__next" });
+			const nextTopRow = nextWrap.createDiv({ cls: "pc-header__next-row" });
+			this.nextLabelEl = nextTopRow.createSpan({
+				cls: "pc-header__next-label",
+				text: "وقت بعدی",
+			});
+			this.nextValueEl = nextTopRow.createSpan({
+				cls: "pc-header__next-value",
+				text: "—",
+			});
+			this.nextCountdownEl = nextWrap.createDiv({
+				cls: "pc-header__next-countdown",
+				text: "",
+			});
+
+			/* List */
+			const listEl = container.createDiv({ cls: "pc-list" });
 			this.itemElements.clear();
 
-			for (const item of calculated.items) {
-				const itemEl = listEl.createDiv({ cls: "prayer_item" });
-				this.itemElements.set(item.key, itemEl);
+			if (calculated.items.length === 0) {
+				container.createDiv({
+					cls: "pc-empty",
+					text: "هیچ وقتی برای نمایش انتخاب نشده است.",
+				});
+			} else {
+				for (const item of calculated.items) {
+					const itemEl = listEl.createDiv({ cls: "pc-item" });
+					this.itemElements.set(item.key, itemEl);
 
-				const labelGroup = itemEl.createDiv({ cls: "prayer_label_group" });
-				const iconEl = labelGroup.createSpan({ cls: "prayer_icon" });
-				setIcon(iconEl, PRAYER_ICONS[item.key]);
+					const left = itemEl.createDiv({ cls: "pc-item__left" });
+					const iconEl = left.createSpan({ cls: "pc-item__icon" });
+					setIcon(iconEl, PRAYER_ICONS[item.key]);
+					left.createSpan({ cls: "pc-item__label", text: item.label });
 
-				labelGroup.createSpan({ text: item.label, cls: "prayer_name" });
-				itemEl.createSpan({ text: item.time, cls: "prayer_time" });
+					itemEl.createSpan({ cls: "pc-item__time", text: this.toPersianDigits(item.time) });
+				}
 			}
 
 			this.updateItemStatuses();
@@ -247,23 +325,83 @@ class PrayerTimesView extends ItemView {
 		const warningMs = (this.plugin.settings.warningIntervalMinutes ?? 10) * 60 * 1000;
 		const activeThresholdMs = 2 * 60 * 1000;
 
+		let nextItem: PrayerTimeItem | null = null;
+
 		for (const item of this.lastCalculatedTimes.items) {
 			const itemEl = this.itemElements.get(item.key);
 			if (!itemEl) continue;
 
-			itemEl.removeClass("past", "approaching", "now", "upcoming");
+			itemEl.removeClass("is-past", "is-approaching", "is-now", "is-upcoming");
 
 			const diff = item.timestamp - now;
 
 			if (diff < -activeThresholdMs) {
-				itemEl.addClass("past");
+				itemEl.addClass("is-past");
 			} else if (diff >= -activeThresholdMs && diff <= activeThresholdMs) {
-				itemEl.addClass("now");
+				itemEl.addClass("is-now");
+				if (!nextItem) nextItem = item;
 			} else if (diff > activeThresholdMs && diff <= warningMs) {
-				itemEl.addClass("approaching");
+				itemEl.addClass("is-approaching");
+				if (!nextItem) nextItem = item;
 			} else {
-				itemEl.addClass("upcoming");
+				itemEl.addClass("is-upcoming");
+				if (!nextItem && diff > 0) nextItem = item;
 			}
+		}
+
+		if (this.nextValueEl && this.nextLabelEl && this.nextCountdownEl) {
+			if (nextItem) {
+				this.nextLabelEl.setText(`وقت بعدی · ${nextItem.label}`);
+				this.nextValueEl.setText(this.toPersianDigits(nextItem.time));
+				this.nextCountdownEl.setText(this.formatCountdown(nextItem.timestamp - now));
+			} else {
+				this.nextLabelEl.setText("وقت بعدی");
+				this.nextValueEl.setText("—");
+				this.nextCountdownEl.setText("پایان اوقات امروز");
+			}
+		}
+	}
+
+	private toPersianDigits(input: string): string {
+		const map: Record<string, string> = {
+			"0": "۰", "1": "۱", "2": "۲", "3": "۳", "4": "۴",
+			"5": "۵", "6": "۶", "7": "۷", "8": "۸", "9": "۹",
+		};
+		return input.replace(/[0-9]/g, (d) => map[d] ?? d);
+	}
+
+	private formatCountdown(ms: number): string {
+		if (ms <= 0) return "اکنون";
+		const totalMinutes = Math.max(1, Math.round(ms / 60000));
+		const hours = Math.floor(totalMinutes / 60);
+		const minutes = totalMinutes % 60;
+		let text: string;
+		if (hours > 0 && minutes > 0) {
+			text = `${hours} ساعت و ${minutes} دقیقه مانده`;
+		} else if (hours > 0) {
+			text = `${hours} ساعت مانده`;
+		} else {
+			text = `${minutes} دقیقه مانده`;
+		}
+		return this.toPersianDigits(text);
+	}
+
+	private formatTodayPersian(): string {
+		try {
+			const parts = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+				weekday: "long",
+				day: "numeric",
+				month: "long",
+			}).formatToParts(new Date());
+
+			const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+			const day = parts.find((p) => p.type === "day")?.value ?? "";
+			const month = parts.find((p) => p.type === "month")?.value ?? "";
+
+			if (!weekday && !day && !month) return "";
+			return `${weekday} ${day} ${month}`.trim();
+		} catch {
+			return "";
 		}
 	}
 
@@ -280,6 +418,7 @@ class PrayerTimesView extends ItemView {
 	}
 }
 
+/* SETTINGS TAB */
 class PrayerChimeSettingTab extends PluginSettingTab {
 	private readonly plugin: PrayerChimePlugin;
 
@@ -291,11 +430,17 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+		containerEl.addClass("prayer-chime-settings");
 
-		containerEl.createEl("h2", { text: "تنظیمات PrayerChime" });
+		/* Intro card */
+		const intro = containerEl.createDiv({ cls: "pc-settings-header" });
+		intro.createEl("h2", { text: "تنظیمات PrayerChime" });
+		intro.createEl("p", {
+			text: "روش محاسبه، اوقات نمایشی و شهر مورد نظر خود را انتخاب کنید. تغییرات به‌صورت خودکار ذخیره می‌شوند.",
+		});
 
-		// General Settings Section
-		containerEl.createEl("h3", { text: "تنظیمات عمومی" });
+		/* General */
+		this.renderSectionHeader(containerEl, "settings", "تنظیمات عمومی");
 
 		new Setting(containerEl)
 			.setName("روش محاسبه")
@@ -307,33 +452,38 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 					.addOption("ISNA", "انجمن اسلامی آمریکای شمالی (ISNA)")
 					.addOption("MWL", "رابطه العالم الاسلامی (MWL)")
 					.addOption("UmmAlQura", "دانشگاه ام‌القری (مکه)")
-					// Cast correctly to maintain strict type safety
 					.setValue(this.plugin.settings.calculationMethod)
-					.onChange(async (value: "Tehran" | "Jafari" | "ISNA" | "MWL" | "UmmAlQura") => {
-						this.plugin.settings.calculationMethod = value;
+					.onChange(
+						async (
+							value: "Tehran" | "Jafari" | "ISNA" | "MWL" | "UmmAlQura",
+						) => {
+							this.plugin.settings.calculationMethod = value;
+							await this.plugin.saveSettings();
+						},
+					);
+			});
+
+		new Setting(containerEl)
+			.setName("نمایش در نوار وضعیت")
+			.setDesc("نمایش زمان اذان بعدی در نوار پایین صفحه.")
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.showStatusBar)
+					.onChange(async (value) => {
+						this.plugin.settings.showStatusBar = value;
 						await this.plugin.saveSettings();
+
+						if (value) {
+							this.plugin.initStatusBar();
+						} else {
+							this.plugin.removeStatusBar();
+						}
 					});
 			});
 
 		new Setting(containerEl)
-			.setName("نمایش در نوار وضعیت (Status Bar)")
-			.setDesc("نمایش زمان اذان/اوقات شرعی بعدی در نوار پایین صفحه")
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.showStatusBar).onChange(async (value) => {
-					this.plugin.settings.showStatusBar = value;
-					await this.plugin.saveSettings();
-
-					if (value) {
-						this.plugin.initStatusBar();
-					} else {
-						this.plugin.removeStatusBar();
-					}
-				});
-			});
-
-		new Setting(containerEl)
 			.setName("بازه زمانی هشدار")
-			.setDesc("مدت زمان پیش از اذان برای تغییر وضعیت به 'در حال نزدیک شدن'")
+			.setDesc("چند دقیقه پیش از اذان وضعیت به «در حال نزدیک شدن» تغییر کند.")
 			.addDropdown((dropdown) => {
 				dropdown
 					.addOption("5", "۵ دقیقه")
@@ -343,42 +493,110 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 					.setValue(String(this.plugin.settings.warningIntervalMinutes ?? 10))
 					.onChange(async (value) => {
 						const parsed = parseInt(value, 10);
-						this.plugin.settings.warningIntervalMinutes = isNaN(parsed) ? 10 : parsed;
+						this.plugin.settings.warningIntervalMinutes = isNaN(parsed)
+							? 10
+							: parsed;
 						await this.plugin.saveSettings();
 					});
 			});
 
-		// Displayed items toggle list
-		containerEl.createEl("h3", { text: "نمایش اوقات شرعی" });
+		/* Displayed times */
+		this.renderSectionHeader(containerEl, "list-checks", "نمایش اوقات شرعی");
 
 		for (const key of Object.keys(DEFAULT_SETTINGS.displayedTimes) as PrayerKey[]) {
 			const itemSetting = this.plugin.settings.displayedTimes[key];
 			if (!itemSetting) continue;
 
-			new Setting(containerEl)
-				.setName(itemSetting.text)
-				.addToggle((toggle) => {
-					toggle.setValue(itemSetting.display).onChange(async (value) => {
-						itemSetting.display = value;
-						await this.plugin.saveSettings();
-					});
+			new Setting(containerEl).setName(itemSetting.text).addToggle((toggle) => {
+				toggle.setValue(itemSetting.display).onChange(async (value) => {
+					itemSetting.display = value;
+					await this.plugin.saveSettings();
 				});
+			});
 		}
 
-		// City selector section
-		containerEl.createEl("h3", { text: "انتخاب شهر" });
+		/* City picker */
+		this.renderSectionHeader(containerEl, "map-pin", "انتخاب شهر");
 
-		const searchBox = containerEl.createEl("input", { type: "text", placeholder: "جستجوی شهر یا استان...", cls: "search-box" });
-		const cityContainer = containerEl.createDiv({ cls: "province-container" });
-		const cityList = cityContainer.createEl("ul", { cls: "province-list" });
+		const picker = containerEl.createDiv({ cls: "pc-city-picker" });
+
+		const favoritesContainer = picker.createDiv({ cls: "pc-favorites is-empty" });
+
+		const searchWrap = picker.createDiv({ cls: "pc-search" });
+		const searchIcon = searchWrap.createSpan({ cls: "pc-search__icon" });
+		setIcon(searchIcon, "search");
+		const searchBox = searchWrap.createEl("input", {
+			type: "text",
+			attr: { placeholder: "جستجوی شهر یا استان...", spellcheck: "false" },
+		});
+
+		const cityContainer = picker.createDiv({ cls: "pc-city-list-wrap" });
+		const cityList = cityContainer.createEl("ul", { cls: "pc-city-list" });
 
 		void this.plugin.cities.getCities().then((cities) => {
+			const cityMap = new Map<string, City>(cities.map((c) => [c.id, c]));
+
+			const renderFavorites = (): void => {
+				favoritesContainer.empty();
+				const favorites = this.plugin.settings.favoriteCityIds
+					.map((id) => cityMap.get(id))
+					.filter((c): c is City => c !== undefined);
+
+				if (favorites.length === 0) {
+					favoritesContainer.addClass("is-empty");
+					return;
+				}
+				favoritesContainer.removeClass("is-empty");
+
+				for (const city of favorites) {
+					const isSelected = city.id === this.plugin.settings.selectedCityId;
+					const chip = favoritesContainer.createDiv({
+						cls: `pc-chip${isSelected ? " is-selected" : ""}`,
+					});
+
+					const label = chip.createSpan({
+						text:
+							city.province === city.city
+								? city.city
+								: `${city.city} (${city.province})`,
+					});
+
+					label.addEventListener("click", () => {
+						void this.plugin.selectCity(city.id).then(() => {
+							renderFavorites();
+							renderCities(searchBox.value.trim());
+						});
+					});
+
+					const removeBtn = chip.createDiv({ cls: "pc-chip__remove" });
+					setIcon(removeBtn, "x");
+					removeBtn.addEventListener("click", (e) => {
+						e.stopPropagation();
+						void this.plugin.toggleFavoriteCity(city.id).then(() => {
+							renderFavorites();
+							renderCities(searchBox.value.trim());
+						});
+					});
+				}
+			};
+
 			cityList.addEventListener("click", (event: MouseEvent) => {
 				const target = event.target as HTMLElement | null;
+				const starBtn = target?.closest<HTMLElement>(".pc-star");
 				const listItem = target?.closest<HTMLLIElement>("li[data-city-id]");
 				const cityId = listItem?.getAttribute("data-city-id");
-				if (cityId) {
+
+				if (!cityId) return;
+
+				if (starBtn) {
+					event.stopPropagation();
+					void this.plugin.toggleFavoriteCity(cityId).then(() => {
+						renderFavorites();
+						renderCities(searchBox.value.trim());
+					});
+				} else {
 					void this.plugin.selectCity(cityId).then(() => {
+						renderFavorites();
 						renderCities(searchBox.value.trim());
 					});
 				}
@@ -392,14 +610,42 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 				frame = window.requestAnimationFrame(() => {
 					cityList.empty();
 					const filtered = this.plugin.cities.search(cities, filter, SEARCH_LIMIT);
-					for (const city of filtered) {
-						const item = cityList.createEl("li", {
-							text: city.province === city.city ? city.city : `${city.city}، ${city.province}`,
-							attr: { "data-city-id": city.id },
+					const favoriteSet = new Set(this.plugin.settings.favoriteCityIds);
+
+					if (filtered.length === 0) {
+						cityList.createEl("li", {
+							cls: "pc-no-results",
+							text: "نتیجه‌ای یافت نشد.",
 						});
-						if (city.id === this.plugin.settings.selectedCityId) {
-							item.addClass("selected");
-						}
+						return;
+					}
+
+					for (const city of filtered) {
+						const isSelected = city.id === this.plugin.settings.selectedCityId;
+						const isFav = favoriteSet.has(city.id);
+
+						const item = cityList.createEl("li", {
+							attr: { "data-city-id": city.id },
+							cls: isSelected ? "is-selected" : "",
+						});
+
+						item.createSpan({
+							text:
+								city.province === city.city
+									? city.city
+									: `${city.city}، ${city.province}`,
+						});
+
+						const starBtn = item.createDiv({
+							cls: `pc-star${isFav ? " is-active" : ""}`,
+							attr: {
+								"aria-label": isFav
+									? "حذف از علاقمندی‌ها"
+									: "افزودن به علاقمندی‌ها",
+								role: "button",
+							},
+						});
+						setIcon(starBtn, "star");
 					}
 				});
 			};
@@ -408,7 +654,19 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 				renderCities(searchBox.value.trim());
 			});
 
+			renderFavorites();
 			renderCities("");
 		});
+	}
+
+	private renderSectionHeader(
+		parent: HTMLElement,
+		icon: IconName,
+		title: string,
+	): void {
+		const section = parent.createDiv({ cls: "pc-section" });
+		const iconEl = section.createSpan({ cls: "pc-section__icon" });
+		setIcon(iconEl, icon);
+		section.createEl("h3", { cls: "pc-section__title", text: title });
 	}
 }

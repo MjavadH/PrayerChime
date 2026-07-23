@@ -34,6 +34,7 @@ export interface PrayerChimeSettings {
 	warningIntervalMinutes: number;
 	showStatusBar: boolean;
 	calculationMethod: CalculationMethodType;
+	favoriteCityIds: string[];
 }
 
 export interface PrayerTimeItem {
