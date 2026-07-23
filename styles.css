@@ -32,7 +32,7 @@
 	border-radius: 10px;
 	border: 1px solid var(--background-modifier-border);
 	overflow: hidden;
-	transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease-in-out, border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out, opacity 0.4s ease;
 	animation: prayer-slide-in 0.35s ease both;
 }
 
@@ -134,6 +134,22 @@
 	background: color-mix(in oklab, var(--color-green, #10b981) 12%, var(--background-primary));
 	border-color: color-mix(in oklab, var(--color-green, #10b981) 45%, var(--background-modifier-border));
 	box-shadow: 0 4px 20px -6px color-mix(in oklab, var(--color-green, #10b981) 40%, transparent);
+	animation: prayer-state-now 0.8s ease-out forwards;
+}
+
+@keyframes prayer-state-now {
+	0% {
+		background: color-mix(in oklab, var(--color-orange, #f59e0b) 15%, var(--background-primary));
+		transform: scale(0.98);
+	}
+	50% {
+		background: color-mix(in oklab, var(--color-green, #10b981) 25%, var(--background-primary));
+		transform: scale(1.02);
+	}
+	100% {
+		background: color-mix(in oklab, var(--color-green, #10b981) 12%, var(--background-primary));
+		transform: scale(1);
+	}
 }
 
 .prayer_item.now::before {
