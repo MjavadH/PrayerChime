@@ -115,17 +115,31 @@ export default class PrayerChimePlugin extends Plugin {
 
 	private normalizeSettings(saved: Partial<PrayerChimeSettings>): PrayerChimeSettings {
 		const settings = cloneDefaultSettings();
-		settings.selectedCityId = typeof saved.selectedCityId === "string" ? saved.selectedCityId : "";
-		settings.selectedCity = typeof saved.selectedCity === "string" ? saved.selectedCity : undefined;
-		settings.selectedprovinceCode = typeof saved.selectedprovinceCode === "string" ? saved.selectedprovinceCode : undefined;
-		const savedTimes = saved.displayedTimes as Partial<PrayerChimeSettings["displayedTimes"]> | Record<string, unknown> | undefined;
+		const savedRecord = saved as Record<string, unknown>;
+
+		if (typeof savedRecord.selectedCityId === "string") {
+			settings.selectedCityId = savedRecord.selectedCityId;
+		}
+		if (typeof savedRecord.selectedCity === "string") {
+			settings.selectedCity = savedRecord.selectedCity;
+		}
+		if (typeof savedRecord.selectedprovinceCode === "string") {
+			settings.selectedprovinceCode = savedRecord.selectedprovinceCode;
+		}
+
+		const savedTimes = savedRecord.displayedTimes;
 		if (savedTimes && typeof savedTimes === "object") {
-			for (const [key, value] of Object.entries(savedTimes)) {
+			const timesObj = savedTimes as Record<string, Record<string, unknown>>;
+			for (const key of Object.keys(timesObj)) {
 				const normalizedKey = (LEGACY_KEYS[key] ?? key) as PrayerKey;
-				if (normalizedKey in settings.displayedTimes && value && typeof value === "object") {
-					const display = (value as { display?: unknown; text?: unknown }).display;
-					const text = (value as { display?: unknown; text?: unknown }).text;
-					settings.displayedTimes[normalizedKey] = { display: typeof display === "boolean" ? display : settings.displayedTimes[normalizedKey].display, text: typeof text === "string" && text.length > 0 ? text : settings.displayedTimes[normalizedKey].text };
+				const item = timesObj[key];
+				if (normalizedKey in settings.displayedTimes && item && typeof item === "object") {
+					const display = item.display;
+					const text = item.text;
+					settings.displayedTimes[normalizedKey] = {
+						display: typeof display === "boolean" ? display : settings.displayedTimes[normalizedKey].display,
+						text: typeof text === "string" && text.length > 0 ? text : settings.displayedTimes[normalizedKey].text,
+					};
 				}
 			}
 		}
@@ -311,11 +325,14 @@ class PrayerChimeSettingsTab extends PluginSettingTab {
 		const cityContainer = containerEl.createDiv({ cls: "province-container" });
 		const cityList = cityContainer.createEl("ul", { cls: "province-list" });
 		const cities = await this.plugin.cities.getCities();
-		cityList.addEventListener("click", (event) => {
-			const target = event.target instanceof HTMLElement ? event.target.closest("li[data-city-id]") : null;
-			const cityId = target instanceof HTMLElement ? target.dataset.cityId : undefined;
+		cityList.addEventListener("click", (event: MouseEvent) => {
+			const target = event.target as HTMLElement | null;
+			const listItem = target?.closest<HTMLLIElement>("li[data-city-id]");
+			const cityId = listItem?.getAttribute("data-city-id");
 			if (cityId) {
-				void this.plugin.selectCity(cityId).then(() => renderCities(searchBox.value.trim()));
+				void this.plugin.selectCity(cityId).then(() => {
+					renderCities(searchBox.value.trim());
+				});
 			}
 		});
 		let frame = 0;
