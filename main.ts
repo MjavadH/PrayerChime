@@ -31,6 +31,7 @@ const DEFAULT_SETTINGS: PrayerChimeSettings = {
 	},
 	warningIntervalMinutes: 10,
 	showStatusBar: true,
+	calculationMethod: "Tehran",
 };
 
 export default class PrayerChimePlugin extends Plugin {
@@ -295,6 +296,24 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 
 		// General Settings Section
 		containerEl.createEl("h3", { text: "تنظیمات عمومی" });
+
+		new Setting(containerEl)
+			.setName("روش محاسبه")
+			.setDesc("الگوریتم و زوایای محاسبه اوقات شرعی را انتخاب کنید.")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("Tehran", "موسسه ژئوفیزیک دانشگاه تهران (پیش‌فرض)")
+					.addOption("Jafari", "شیعه اثنی‌عشری (موسسه لوا)")
+					.addOption("ISNA", "انجمن اسلامی آمریکای شمالی (ISNA)")
+					.addOption("MWL", "رابطه العالم الاسلامی (MWL)")
+					.addOption("UmmAlQura", "دانشگاه ام‌القری (مکه)")
+					// Cast correctly to maintain strict type safety
+					.setValue(this.plugin.settings.calculationMethod)
+					.onChange(async (value: "Tehran" | "Jafari" | "ISNA" | "MWL" | "UmmAlQura") => {
+						this.plugin.settings.calculationMethod = value;
+						await this.plugin.saveSettings();
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("نمایش در نوار وضعیت (Status Bar)")

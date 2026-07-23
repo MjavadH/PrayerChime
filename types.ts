@@ -24,6 +24,8 @@ export interface PrayerDisplaySetting {
 	text: string;
 }
 
+export type CalculationMethodType = "Tehran" | "Jafari" | "ISNA" | "MWL" | "UmmAlQura";
+
 export interface PrayerChimeSettings {
 	selectedCityId: string;
 	selectedCity?: string;
@@ -31,6 +33,7 @@ export interface PrayerChimeSettings {
 	displayedTimes: Record<PrayerKey, PrayerDisplaySetting>;
 	warningIntervalMinutes: number;
 	showStatusBar: boolean;
+	calculationMethod: CalculationMethodType;
 }
 
 export interface PrayerTimeItem {

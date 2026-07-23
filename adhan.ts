@@ -11,12 +11,29 @@ export interface CalculationParameters {
 
 export class CalculationMethod {
 	static Tehran(): CalculationParameters {
-		return {
-			fajrAngle: 17.7,
-			ishaAngle: 14,
-			maghribAngle: 4.5,
-			midnightMode: "jafari",
-		};
+		return { fajrAngle: 17.7, ishaAngle: 14, maghribAngle: 4.5, midnightMode: "jafari" };
+	}
+
+	static Jafari(): CalculationParameters {
+		// Shia Ithna Ashari (Leva Institute, Qum)
+		return { fajrAngle: 16.0, ishaAngle: 14.0, maghribAngle: 4.0, midnightMode: "jafari" };
+	}
+
+	static ISNA(): CalculationParameters {
+		// Islamic Society of North America
+		return { fajrAngle: 15.0, ishaAngle: 15.0, maghribAngle: 0, midnightMode: "standard" };
+	}
+
+	static MWL(): CalculationParameters {
+		// Muslim World League
+		return { fajrAngle: 18.0, ishaAngle: 17.0, maghribAngle: 0, midnightMode: "standard" };
+	}
+
+	static UmmAlQura(): CalculationParameters {
+		// Umm al-Qura University, Makkah
+		// Note: Umm al-Qura typically uses a +90min fixed interval for Isha,
+		// but mapping to an 18.5 angle here ensures compatibility with the math structure.
+		return { fajrAngle: 18.5, ishaAngle: 18.5, maghribAngle: 0, midnightMode: "standard" };
 	}
 }
 
@@ -89,7 +106,7 @@ export class PrayerTimes {
 		this.sunset = dateFromLocalHours(date, dhuhrHours + sunriseOffset);
 		this.fajr = dateFromLocalHours(date, dhuhrHours - fajrOffset);
 		this.asr = dateFromLocalHours(date, dhuhrHours + asrOffset);
-		this.maghrib = dateFromLocalHours(date, dhuhrHours + maghribOffset);
+		this.maghrib = parameters.maghribAngle === 0 ? this.sunset : dateFromLocalHours(date, dhuhrHours + maghribOffset);
 		this.isha = dateFromLocalHours(date, dhuhrHours + ishaOffset);
 		const nightStart = dhuhrHours + sunriseOffset;
 		const nextFajr = dhuhrHours + 24 - fajrOffset;

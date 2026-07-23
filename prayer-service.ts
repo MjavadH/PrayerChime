@@ -35,7 +35,26 @@ const toPersianTime = (date: Date): string => TIME_FORMATTER.format(date).replac
 export class PrayerService {
 	calculate(city: City, settings: PrayerChimeSettings): CalculatedPrayerTimes {
 		const coordinates = new Coordinates(Number(city.latitude), Number(city.longitude));
-		const prayerTimes = new PrayerTimes(coordinates, getTehranDate(), CalculationMethod.Tehran());
+		let methodParams: import("./adhan").CalculationParameters;
+		switch (settings.calculationMethod) {
+			case "Jafari":
+				methodParams = CalculationMethod.Jafari();
+				break;
+			case "ISNA":
+				methodParams = CalculationMethod.ISNA();
+				break;
+			case "MWL":
+				methodParams = CalculationMethod.MWL();
+				break;
+			case "UmmAlQura":
+				methodParams = CalculationMethod.UmmAlQura();
+				break;
+			case "Tehran":
+			default:
+				methodParams = CalculationMethod.Tehran();
+				break;
+		}
+		const prayerTimes = new PrayerTimes(coordinates, getTehranDate(), methodParams);
 		const values: Record<PrayerKey, Date> = {
 			fajr: prayerTimes.fajr,
 			sunrise: prayerTimes.sunrise,
