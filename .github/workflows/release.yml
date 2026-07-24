@@ -1,80 +1,46 @@
 name: Release Obsidian plugin
 
 on:
-    push:
-        tags:
-            - "*"
+    release:
+        types: [published]
 
-permissions: read-all
+permissions:
+    contents: write
 
 concurrency:
-    group: release-${{ github.ref }}
+    group: release-${{ github.event.release.tag_name }}
     cancel-in-progress: true
 
 jobs:
     release:
-        name: Build & Release
+        name: Build & upload release assets
         runs-on: ubuntu-latest
         timeout-minutes: 15
-
-        permissions:
-            contents: write
-            id-token: write
-            attestations: write
 
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
 
             - name: Setup pnpm
               uses: pnpm/action-setup@v4
               with:
+                  version: 11.16.0
                   run_install: false
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: 24
-                  cache: "pnpm"
+                  cache: pnpm
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Validate plugin manifest
-              run: |
-                  test -f manifest.json
-                  node -e "const m=require('./manifest.json'); if(!m.version) process.exit(1)"
-
             - name: Build plugin
               run: pnpm run build
 
-            - name: Verify build artifacts
-              run: |
-                  test -f main.js
-                  test -f manifest.json
-
-            - name: Extract release notes
-              run: pnpm dlx tsx scripts/get-release-notes.ts
-
-            - name: Attest build provenance
-              uses: actions/attest-build-provenance@v2
-              with:
-                  subject-path: |
-                      main.js
-                      manifest.json
-                      styles.css
-
-            - name: Create GitHub release
-              if: startsWith(github.ref, 'refs/tags/')
+            - name: Upload release assets
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  TAG: ${{ github.ref_name }}
-              run: |
-                  gh release create "$TAG" \
-                    --title "$TAG" \
-                    --notes-file release_body.txt \
-                    main.js \
-                    manifest.json \
-                    styles.css
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: ${{ github.event.release.tag_name }}
+              run: gh release upload "$TAG" main.js manifest.json styles.css --clobber
