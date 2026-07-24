@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
-import type { City, IranDatasetCityRecord, IranDataset } from "./types";
-import iranDataset from "./data/iran-dataset.json";
+import type { City, IranDatasetCityRecord } from "../types";
+import iranDataset from "../data/iran-dataset.json";
 
 const TEHRAN_CITY_NAME = "تهران";
 
@@ -82,13 +82,11 @@ export class CityService {
 	}
 
 	private parseDataset(dataset: unknown): City[] {
-		const data = dataset as IranDataset;
-
-		if (!data?.DocumentElement?.cities || !Array.isArray(data.DocumentElement.cities)) {
+		if (!isRecord(dataset) || !isRecord(dataset.DocumentElement) || !Array.isArray(dataset.DocumentElement.cities)) {
 			return [];
 		}
 
-		return data.DocumentElement.cities.filter(isDatasetCity).map((city) => ({
+		return dataset.DocumentElement.cities.filter(isDatasetCity).map((city) => ({
 			...city,
 			id: cityId(city),
 			searchText: normalizeText(`${city.city} ${city.province} ${city.state}`)

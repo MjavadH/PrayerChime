@@ -5,11 +5,11 @@
     "inlineSources": true,
     "module": "ESNext",
     "target": "ES6",
-    "allowJs": true,
+    "allowJs": false,
     "noImplicitAny": true,
     "moduleResolution": "node",
-	"resolveJsonModule": true,
-	"esModuleInterop": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "importHelpers": true,
     "isolatedModules": true,
     "strictNullChecks": true,
@@ -18,9 +18,10 @@
       "ES5",
       "ES6",
       "ES7"
-    ]
+    ],
+    "strict": true
   },
   "include": [
-    "**/*.ts"
+    "src/**/*.ts"
   ]
 }
