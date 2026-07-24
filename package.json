@@ -24,10 +24,10 @@
 		"@biomejs/biome": "^2.5.5",
 		"@types/node": "^26.1.1",
 		"esbuild": "0.28.1",
-		"obsidian": "latest",
+		"obsidian": "1.13.1",
 		"tslib": "2.8.1",
 		"typescript": "7.0.2",
-		"vitest": "latest"
+		"vitest": "4.1.10"
 	},
 	"packageManager": "npm@10.8.2",
 	"repository": {
@@ -40,9 +40,5 @@
 	"homepage": "https://github.com/MjavadH/PrayerChime#readme",
 	"contributors": [
 		"MjavadH"
-	],
-	"dependencies": {
-		"@emnapi/core": "^1.11.2",
-		"@emnapi/runtime": "^1.11.2"
-	}
+	]
 }
