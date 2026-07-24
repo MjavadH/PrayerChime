@@ -1,6 +1,7 @@
-import { App, PluginSettingTab, Setting, setIcon, type IconName } from "obsidian";
+import type { App, IconName } from "obsidian";
+import { PluginSettingTab, Setting, setIcon } from "obsidian";
 import { PRAYER_ORDER, SEARCH_LIMIT } from "../core/constants";
-import { DEFAULT_SETTINGS, isCalculationMethod } from "../core/settings";
+import { isCalculationMethod } from "../core/settings";
 import type PrayerChimePlugin from "../main";
 import type { City } from "../types";
 
@@ -12,16 +13,6 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	getSettingDefinitions() {
-		return [
-			{ id: "calculation-method", name: "روش محاسبه", description: "الگوریتم و زوایای محاسبه اوقات شرعی" },
-			{ id: "status-bar", name: "نمایش در نوار وضعیت", description: "نمایش زمان اذان بعدی در نوار پایین صفحه" },
-			{ id: "warning-interval", name: "بازه زمانی هشدار", description: "دقیقه‌های مانده تا اذان برای نمایش وضعیت نزدیک شدن" },
-			{ id: "displayed-times", name: "نمایش اوقات شرعی", description: "انتخاب اوقات شرعی قابل نمایش" },
-			{ id: "city-picker", name: "انتخاب شهر", description: "جستجو، انتخاب و علاقه‌مندی شهرهای ایران" },
-		];
-	}
-
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -31,7 +22,9 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 		const intro = containerEl.createDiv({ cls: "pc-settings-header" });
 		new Setting(intro)
 			.setName("تنظیمات PrayerChime")
-			.setDesc("روش محاسبه، اوقات نمایشی و شهر مورد نظر خود را انتخاب کنید. تغییرات به‌صورت خودکار ذخیره می‌شوند.")
+			.setDesc(
+				"روش محاسبه، اوقات نمایشی و شهر مورد نظر خود را انتخاب کنید. تغییرات به‌صورت خودکار ذخیره می‌شوند.",
+			)
 			.setHeading();
 
 		/* General */
@@ -48,31 +41,27 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 					.addOption("MWL", "رابطه العالم الاسلامی (MWL)")
 					.addOption("UmmAlQura", "دانشگاه ام‌القری (مکه)")
 					.setValue(this.plugin.settings.calculationMethod)
-					.onChange(
-						async (value) => {
-							if (!isCalculationMethod(value)) return;
-							this.plugin.settings.calculationMethod = value;
-							await this.plugin.saveSettings();
-						},
-					);
+					.onChange(async (value) => {
+						if (!isCalculationMethod(value)) return;
+						this.plugin.settings.calculationMethod = value;
+						await this.plugin.saveSettings();
+					});
 			});
 
 		new Setting(containerEl)
 			.setName("نمایش در نوار وضعیت")
 			.setDesc("نمایش زمان اذان بعدی در نوار پایین صفحه.")
 			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.showStatusBar)
-					.onChange(async (value) => {
-						this.plugin.settings.showStatusBar = value;
-						await this.plugin.saveSettings();
+				toggle.setValue(this.plugin.settings.showStatusBar).onChange(async (value) => {
+					this.plugin.settings.showStatusBar = value;
+					await this.plugin.saveSettings();
 
-						if (value) {
-							this.plugin.initStatusBar();
-						} else {
-							this.plugin.removeStatusBar();
-						}
-					});
+					if (value) {
+						this.plugin.initStatusBar();
+					} else {
+						this.plugin.removeStatusBar();
+					}
+				});
 			});
 
 		new Setting(containerEl)
@@ -87,9 +76,7 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 					.setValue(String(this.plugin.settings.warningIntervalMinutes ?? 10))
 					.onChange(async (value) => {
 						const parsed = parseInt(value, 10);
-						this.plugin.settings.warningIntervalMinutes = isNaN(parsed)
-							? 10
-							: parsed;
+						this.plugin.settings.warningIntervalMinutes = Number.isNaN(parsed) ? 10 : parsed;
 						await this.plugin.saveSettings();
 					});
 			});
@@ -149,10 +136,7 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 					});
 
 					const label = chip.createSpan({
-						text:
-							city.province === city.city
-								? city.city
-								: `${city.city} (${city.province})`,
+						text: city.province === city.city ? city.city : `${city.city} (${city.province})`,
 					});
 
 					label.addEventListener("click", () => {
@@ -225,18 +209,13 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 						});
 
 						item.createSpan({
-							text:
-								city.province === city.city
-									? city.city
-									: `${city.city}، ${city.province}`,
+							text: city.province === city.city ? city.city : `${city.city}، ${city.province}`,
 						});
 
 						const starBtn = item.createDiv({
 							cls: `pc-star${isFav ? " is-active" : ""}`,
 							attr: {
-								"aria-label": isFav
-									? "حذف از علاقمندی‌ها"
-									: "افزودن به علاقمندی‌ها",
+								"aria-label": isFav ? "حذف از علاقمندی‌ها" : "افزودن به علاقمندی‌ها",
 								role: "button",
 							},
 						});
@@ -254,11 +233,7 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 		});
 	}
 
-	private renderSectionHeader(
-		parent: HTMLElement,
-		icon: IconName,
-		title: string,
-	): void {
+	private renderSectionHeader(parent: HTMLElement, icon: IconName, title: string): void {
 		const setting = new Setting(parent).setName(title).setHeading();
 		setting.settingEl.addClass("pc-section");
 

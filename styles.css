@@ -80,8 +80,10 @@
 	border: 1px solid color-mix(in oklab, var(--pc-accent) 25%, transparent);
 	border-radius: 50%;
 	cursor: pointer;
-	transition: background 0.2s var(--pc-ease), transform 0.2s var(--pc-ease),
-	border-color 0.2s var(--pc-ease);
+	transition:
+		background 0.2s var(--pc-ease),
+		transform 0.2s var(--pc-ease),
+		border-color 0.2s var(--pc-ease);
 }
 
 .pc-header__refresh:hover {
@@ -104,8 +106,12 @@
 }
 
 @keyframes pc-spin {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .pc-header__date {
@@ -178,14 +184,30 @@
 }
 
 /* Stagger up to 8 items */
-.pc-item:nth-child(1) { animation-delay: 0.02s; }
-.pc-item:nth-child(2) { animation-delay: 0.06s; }
-.pc-item:nth-child(3) { animation-delay: 0.10s; }
-.pc-item:nth-child(4) { animation-delay: 0.14s; }
-.pc-item:nth-child(5) { animation-delay: 0.18s; }
-.pc-item:nth-child(6) { animation-delay: 0.22s; }
-.pc-item:nth-child(7) { animation-delay: 0.26s; }
-.pc-item:nth-child(8) { animation-delay: 0.30s; }
+.pc-item:nth-child(1) {
+	animation-delay: 0.02s;
+}
+.pc-item:nth-child(2) {
+	animation-delay: 0.06s;
+}
+.pc-item:nth-child(3) {
+	animation-delay: 0.1s;
+}
+.pc-item:nth-child(4) {
+	animation-delay: 0.14s;
+}
+.pc-item:nth-child(5) {
+	animation-delay: 0.18s;
+}
+.pc-item:nth-child(6) {
+	animation-delay: 0.22s;
+}
+.pc-item:nth-child(7) {
+	animation-delay: 0.26s;
+}
+.pc-item:nth-child(8) {
+	animation-delay: 0.3s;
+}
 
 .pc-item::before {
 	content: "";
@@ -195,7 +217,10 @@
 	right: 0;
 	width: 3px;
 	background: var(--pc-border);
-	transition: background 0.3s ease, width 0.3s ease, box-shadow 0.3s ease;
+	transition:
+		background 0.3s ease,
+		width 0.3s ease,
+		box-shadow 0.3s ease;
 }
 
 .pc-item:hover {
@@ -220,7 +245,10 @@
 	border-radius: var(--pc-radius-sm);
 	color: var(--text-muted);
 	background: var(--background-modifier-hover);
-	transition: color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+	transition:
+		color 0.25s ease,
+		background 0.25s ease,
+		transform 0.25s ease;
 	flex-shrink: 0;
 }
 
@@ -255,8 +283,12 @@
 	opacity: 0.45;
 	background: transparent;
 }
-.pc-item.is-past .pc-item__icon { background: transparent; }
-.pc-item.is-past::before { background: var(--text-faint); }
+.pc-item.is-past .pc-item__icon {
+	background: transparent;
+}
+.pc-item.is-past::before {
+	background: var(--text-faint);
+}
 
 .pc-item.is-approaching {
 	background: color-mix(in oklab, var(--pc-warn) 8%, var(--pc-surface));
@@ -391,7 +423,10 @@
 	font-size: 0.85em;
 	color: var(--text-normal);
 	cursor: pointer;
-	transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+	transition:
+		background 0.18s ease,
+		border-color 0.18s ease,
+		transform 0.18s ease;
 	animation: pc-fade-in 0.25s var(--pc-ease) both;
 }
 
@@ -415,7 +450,9 @@
 	height: 16px;
 	border-radius: 50%;
 	opacity: 0.6;
-	transition: opacity 0.15s ease, background 0.15s ease;
+	transition:
+		opacity 0.15s ease,
+		background 0.15s ease;
 }
 
 .prayer-chime-settings .pc-chip__remove:hover {
@@ -456,7 +493,10 @@
 	border-radius: var(--pc-radius-md);
 	box-sizing: border-box;
 	font-size: 0.92em;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease,
+		background 0.2s ease;
 }
 
 .prayer-chime-settings .pc-search input:focus {
@@ -499,7 +539,10 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	transition: background 0.15s ease, color 0.15s ease, padding 0.2s ease;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		padding 0.2s ease;
 }
 
 .prayer-chime-settings .pc-city-list li:hover {
@@ -539,7 +582,11 @@
 	border-radius: 6px;
 	color: var(--text-muted);
 	opacity: 0.35;
-	transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
+	transition:
+		color 0.15s ease,
+		opacity 0.15s ease,
+		transform 0.15s ease,
+		background 0.15s ease;
 }
 
 .prayer-chime-settings .pc-star svg {
@@ -577,23 +624,44 @@
 
 /* Animations */
 @keyframes pc-item-in {
-	from { opacity: 0; transform: translateY(6px); }
-	to { opacity: 1; transform: translateY(0); }
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @keyframes pc-fade-in {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 @keyframes pc-fade-down {
-	from { opacity: 0; transform: translateY(-4px); }
-	to { opacity: 1; transform: translateY(0); }
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @keyframes pc-pulse {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.55; }
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.55;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

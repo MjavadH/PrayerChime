@@ -1,9 +1,9 @@
 import { Plugin } from "obsidian";
-import { VIEW_TYPE_PRAYER_TIMES, STATUS_BAR_UPDATE_INTERVAL_MS } from "./core/constants";
+import { STATUS_BAR_UPDATE_INTERVAL_MS, VIEW_TYPE_PRAYER_TIMES } from "./core/constants";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./core/settings";
-import { PrayerChimeSettingTab } from "./settings/settings-tab";
 import { CityService } from "./services/city-service";
 import { PrayerService } from "./services/prayer-service";
+import { PrayerChimeSettingTab } from "./settings/settings-tab";
 import type { PrayerChimeSettings, PrayerTimeItem } from "./types";
 import { PrayerTimesView } from "./views/prayer-times-view";
 
@@ -89,10 +89,15 @@ export default class PrayerChimePlugin extends Plugin {
 
 		try {
 			const cities = await this.cities.getCities();
-			const city = cities.find((c) => c.id === this.settings.selectedCityId) ?? this.cities.getTehran(cities);
+			const city =
+				cities.find((c) => c.id === this.settings.selectedCityId) ?? this.cities.getTehran(cities);
 			const calculated = this.prayer.calculate(city, this.settings);
-			const nextPrayer: PrayerTimeItem | undefined = calculated.items.find((item) => item.timestamp > Date.now());
-			this.statusBarEl.setText(nextPrayer ? `🕌 بعدی: ${nextPrayer.label} ${nextPrayer.time}` : "🕌 پایان اوقات امروز");
+			const nextPrayer: PrayerTimeItem | undefined = calculated.items.find(
+				(item) => item.timestamp > Date.now(),
+			);
+			this.statusBarEl.setText(
+				nextPrayer ? `🕌 بعدی: ${nextPrayer.label} ${nextPrayer.time}` : "🕌 پایان اوقات امروز",
+			);
 		} catch (error) {
 			console.warn("PrayerChime: Failed to update status bar", error);
 		}
@@ -100,8 +105,14 @@ export default class PrayerChimePlugin extends Plugin {
 
 	private async initDefaultCity(): Promise<void> {
 		const cities = await this.cities.getCities();
-		const selectedCity = await this.cities.getSelectedCity(this.settings.selectedCityId, this.settings.selectedprovinceCode);
-		if (selectedCity.id !== this.settings.selectedCityId || !cities.some((city) => city.id === this.settings.selectedCityId)) {
+		const selectedCity = await this.cities.getSelectedCity(
+			this.settings.selectedCityId,
+			this.settings.selectedprovinceCode,
+		);
+		if (
+			selectedCity.id !== this.settings.selectedCityId ||
+			!cities.some((city) => city.id === this.settings.selectedCityId)
+		) {
 			this.settings.selectedCityId = selectedCity.id;
 			await this.saveSettings();
 		}

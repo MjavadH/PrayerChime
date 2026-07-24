@@ -35,8 +35,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isPrayerDisplaySetting = (value: unknown): value is PrayerDisplaySetting =>
 	isRecord(value) && typeof value.display === "boolean" && typeof value.text === "string";
 
-export const isCalculationMethod = (value: unknown): value is PrayerChimeSettings["calculationMethod"] =>
-	value === "Tehran" || value === "Jafari" || value === "ISNA" || value === "MWL" || value === "UmmAlQura";
+export const isCalculationMethod = (
+	value: unknown,
+): value is PrayerChimeSettings["calculationMethod"] =>
+	value === "Tehran" ||
+	value === "Jafari" ||
+	value === "ISNA" ||
+	value === "MWL" ||
+	value === "UmmAlQura";
 
 export const normalizeSettings = (loadedData: unknown): PrayerChimeSettings => {
 	if (!isRecord(loadedData)) {
@@ -45,13 +51,24 @@ export const normalizeSettings = (loadedData: unknown): PrayerChimeSettings => {
 
 	const settings = structuredClone(DEFAULT_SETTINGS);
 
-	if (typeof loadedData.selectedCityId === "string") settings.selectedCityId = loadedData.selectedCityId;
+	if (typeof loadedData.selectedCityId === "string")
+		settings.selectedCityId = loadedData.selectedCityId;
 	if (typeof loadedData.selectedCity === "string") settings.selectedCity = loadedData.selectedCity;
-	if (typeof loadedData.selectedprovinceCode === "string") settings.selectedprovinceCode = loadedData.selectedprovinceCode;
-	if (typeof loadedData.warningIntervalMinutes === "number" && Number.isFinite(loadedData.warningIntervalMinutes)) settings.warningIntervalMinutes = loadedData.warningIntervalMinutes;
-	if (typeof loadedData.showStatusBar === "boolean") settings.showStatusBar = loadedData.showStatusBar;
-	if (isCalculationMethod(loadedData.calculationMethod)) settings.calculationMethod = loadedData.calculationMethod;
-	if (Array.isArray(loadedData.favoriteCityIds)) settings.favoriteCityIds = loadedData.favoriteCityIds.filter((id): id is string => typeof id === "string");
+	if (typeof loadedData.selectedprovinceCode === "string")
+		settings.selectedprovinceCode = loadedData.selectedprovinceCode;
+	if (
+		typeof loadedData.warningIntervalMinutes === "number" &&
+		Number.isFinite(loadedData.warningIntervalMinutes)
+	)
+		settings.warningIntervalMinutes = loadedData.warningIntervalMinutes;
+	if (typeof loadedData.showStatusBar === "boolean")
+		settings.showStatusBar = loadedData.showStatusBar;
+	if (isCalculationMethod(loadedData.calculationMethod))
+		settings.calculationMethod = loadedData.calculationMethod;
+	if (Array.isArray(loadedData.favoriteCityIds))
+		settings.favoriteCityIds = loadedData.favoriteCityIds.filter(
+			(id): id is string => typeof id === "string",
+		);
 
 	if (isRecord(loadedData.displayedTimes)) {
 		for (const key of PRAYER_KEYS) {

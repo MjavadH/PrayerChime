@@ -17,7 +17,15 @@ export interface City extends IranDatasetCityRecord {
 	searchText: string;
 }
 
-export type PrayerKey = "fajr" | "sunrise" | "dhuhr" | "asr" | "sunset" | "maghrib" | "isha" | "midnight";
+export type PrayerKey =
+	| "fajr"
+	| "sunrise"
+	| "dhuhr"
+	| "asr"
+	| "sunset"
+	| "maghrib"
+	| "isha"
+	| "midnight";
 
 export interface PrayerDisplaySetting {
 	display: boolean;

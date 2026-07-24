@@ -1,5 +1,12 @@
-import { ItemView, setIcon, type IconName, type WorkspaceLeaf } from "obsidian";
-import { ACTIVE_PRAYER_THRESHOLD_MS, PRAYER_ICONS, REFRESH_SPIN_DURATION_MS, VIEW_TYPE_PRAYER_TIMES, VIEW_UPDATE_INTERVAL_MS } from "../core/constants";
+import type { IconName, WorkspaceLeaf } from "obsidian";
+import { ItemView, setIcon } from "obsidian";
+import {
+	ACTIVE_PRAYER_THRESHOLD_MS,
+	PRAYER_ICONS,
+	REFRESH_SPIN_DURATION_MS,
+	VIEW_TYPE_PRAYER_TIMES,
+	VIEW_UPDATE_INTERVAL_MS,
+} from "../core/constants";
 import type PrayerChimePlugin from "../main";
 import type { CalculatedPrayerTimes, PrayerKey, PrayerTimeItem } from "../types";
 import { formatCountdown, formatTodayPersian, toPersianDigits } from "../utils/format";
@@ -182,4 +189,3 @@ export class PrayerTimesView extends ItemView {
 		}
 	}
 }
-

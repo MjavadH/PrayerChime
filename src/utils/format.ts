@@ -11,7 +11,8 @@ const PERSIAN_DIGITS: Record<string, string> = {
 	"9": "۹",
 };
 
-export const toPersianDigits = (input: string): string => input.replace(/[0-9]/g, (digit) => PERSIAN_DIGITS[digit] ?? digit);
+export const toPersianDigits = (input: string): string =>
+	input.replace(/[0-9]/g, (digit) => PERSIAN_DIGITS[digit] ?? digit);
 
 export const formatCountdown = (ms: number): string => {
 	if (ms <= 0) return "اکنون";
@@ -27,7 +28,11 @@ export const formatCountdown = (ms: number): string => {
 
 export const formatTodayPersian = (): string => {
 	try {
-		const formatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "long", day: "numeric", month: "long" });
+		const formatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+			weekday: "long",
+			day: "numeric",
+			month: "long",
+		});
 		const parts = formatter.formatToParts(new Date());
 		const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
 		const day = parts.find((part) => part.type === "day")?.value ?? "";

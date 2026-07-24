@@ -1,11 +1,36 @@
+import type {
+	CalculatedPrayerTimes,
+	City,
+	PrayerChimeSettings,
+	PrayerKey,
+	PrayerTimeItem,
+} from "../types";
 import { CalculationMethod, Coordinates, PrayerTimes } from "./adhan";
-import type { CalculatedPrayerTimes, City, PrayerChimeSettings, PrayerKey, PrayerTimeItem } from "../types";
 
 const TIME_ZONE = "Asia/Tehran";
-const DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" });
-const TIME_FORMATTER = new Intl.DateTimeFormat("fa-IR", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false });
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+	timeZone: TIME_ZONE,
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+});
+const TIME_FORMATTER = new Intl.DateTimeFormat("fa-IR", {
+	timeZone: TIME_ZONE,
+	hour: "2-digit",
+	minute: "2-digit",
+	hour12: false,
+});
 
-const PRAYER_ORDER: PrayerKey[] = ["fajr", "sunrise", "dhuhr", "asr", "sunset", "maghrib", "isha", "midnight"];
+const PRAYER_ORDER: PrayerKey[] = [
+	"fajr",
+	"sunrise",
+	"dhuhr",
+	"asr",
+	"sunset",
+	"maghrib",
+	"isha",
+	"midnight",
+];
 
 interface DateParts {
 	year: number;
@@ -19,9 +44,9 @@ const getTehranDateParts = (date: Date): DateParts => {
 	const month = parseInt(parts[1] || "", 10);
 	const day = parseInt(parts[2] || "", 10);
 	return {
-		year: isNaN(year) ? 1970 : year,
-		month: isNaN(month) ? 1 : month,
-		day: isNaN(day) ? 1 : day
+		year: Number.isNaN(year) ? 1970 : year,
+		month: Number.isNaN(month) ? 1 : month,
+		day: Number.isNaN(day) ? 1 : day,
 	};
 };
 
@@ -49,7 +74,6 @@ export class PrayerService {
 			case "UmmAlQura":
 				methodParams = CalculationMethod.UmmAlQura();
 				break;
-			case "Tehran":
 			default:
 				methodParams = CalculationMethod.Tehran();
 				break;
@@ -69,16 +93,14 @@ export class PrayerService {
 		for (const key of PRAYER_ORDER) {
 			const display = settings.displayedTimes[key];
 			if (display?.display) {
-				items.push({ key, label: display.text, time: toPersianTime(values[key]), timestamp: values[key].getTime() });
+				items.push({
+					key,
+					label: display.text,
+					time: toPersianTime(values[key]),
+					timestamp: values[key].getTime(),
+				});
 			}
 		}
 		return { city, dateKey: DATE_FORMATTER.format(new Date()), items };
-	}
-
-	millisecondsUntilNextTehranMidnight(): number {
-		const now = new Date();
-		const { year, month, day } = getTehranDateParts(now);
-		const nextMidnightUtc = Date.UTC(year, month - 1, day + 1, -3, -30, 1);
-		return Math.max(1000, nextMidnightUtc - now.getTime());
 	}
 }
