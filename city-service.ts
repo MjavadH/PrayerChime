@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import type { City, IranDatasetCityRecord } from "./types";
+import type { City, IranDatasetCityRecord, IranDataset } from "./types";
 import iranDataset from "./data/iran-dataset.json";
 
 const TEHRAN_CITY_NAME = "تهران";
@@ -58,18 +58,18 @@ export class CityService {
 		return results;
 	}
 
-	private async loadCities(): Promise<City[]> {
+	private loadCities(): Promise<City[]> {
 		try {
 			const cities = this.parseDataset(iranDataset);
 
 			if (cities.length === 0) {
 				throw new Error("Dataset does not contain valid cities");
 			}
-			return cities;
+			return Promise.resolve(cities);
 		} catch {
 			new Notice("خطا در خواندن اطلاعات شهرها.");
 
-			return [{
+			return Promise.resolve([{
 				id: "fallback-tehran",
 				state: "تهران",
 				province: "تهران",
@@ -77,18 +77,21 @@ export class CityService {
 				latitude: "35.6892",
 				longitude: "51.3890",
 				searchText: normalizeText("تهران تهران تهران")
-			}];
+			}]);
 		}
 	}
 
 	private parseDataset(dataset: unknown): City[] {
-		if (!isRecord(dataset) || !isRecord(dataset.DocumentElement)) {
+		const data = dataset as IranDataset;
+
+		if (!data?.DocumentElement?.cities || !Array.isArray(data.DocumentElement.cities)) {
 			return [];
 		}
-		const cities = dataset.DocumentElement.cities;
-		if (!Array.isArray(cities)) {
-			return [];
-		}
-		return cities.filter(isDatasetCity).map((city) => ({ ...city, id: cityId(city), searchText: normalizeText(`${city.city} ${city.province} ${city.state}`) }));
+
+		return data.DocumentElement.cities.filter(isDatasetCity).map((city) => ({
+			...city,
+			id: cityId(city),
+			searchText: normalizeText(`${city.city} ${city.province} ${city.state}`)
+		}));
 	}
 }

@@ -86,7 +86,8 @@ export default class PrayerChimePlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const loadedData = (await this.loadData()) as Partial<PrayerChimeSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData ?? {});
 	}
 
 	async saveSettings(): Promise<void> {
@@ -110,7 +111,7 @@ export default class PrayerChimePlugin extends Plugin {
 		}
 
 		if (leaf) {
-			workspace.revealLeaf(leaf);
+			await workspace.revealLeaf(leaf);
 		}
 	}
 
@@ -388,11 +389,12 @@ class PrayerTimesView extends ItemView {
 
 	private formatTodayPersian(): string {
 		try {
-			const parts = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+			const formatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
 				weekday: "long",
 				day: "numeric",
 				month: "long",
-			}).formatToParts(new Date());
+			});
+			const parts = formatter.formatToParts(new Date()) as { type: string; value: string }[];
 
 			const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
 			const day = parts.find((p) => p.type === "day")?.value ?? "";
@@ -427,6 +429,10 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	getSettingDefinitions() {
+		return [];
+	}
+
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
@@ -434,10 +440,10 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 
 		/* Intro card */
 		const intro = containerEl.createDiv({ cls: "pc-settings-header" });
-		intro.createEl("h2", { text: "تنظیمات PrayerChime" });
-		intro.createEl("p", {
-			text: "روش محاسبه، اوقات نمایشی و شهر مورد نظر خود را انتخاب کنید. تغییرات به‌صورت خودکار ذخیره می‌شوند.",
-		});
+		new Setting(intro)
+			.setName("تنظیمات PrayerChime")
+			.setDesc("روش محاسبه، اوقات نمایشی و شهر مورد نظر خود را انتخاب کنید. تغییرات به‌صورت خودکار ذخیره می‌شوند.")
+			.setHeading();
 
 		/* General */
 		this.renderSectionHeader(containerEl, "settings", "تنظیمات عمومی");
@@ -664,9 +670,11 @@ class PrayerChimeSettingTab extends PluginSettingTab {
 		icon: IconName,
 		title: string,
 	): void {
-		const section = parent.createDiv({ cls: "pc-section" });
-		const iconEl = section.createSpan({ cls: "pc-section__icon" });
+		const setting = new Setting(parent).setName(title).setHeading();
+		setting.settingEl.addClass("pc-section");
+
+		const iconEl = setting.settingEl.createSpan({ cls: "pc-section__icon" });
 		setIcon(iconEl, icon);
-		section.createEl("h3", { cls: "pc-section__title", text: title });
+		setting.settingEl.prepend(iconEl);
 	}
 }
