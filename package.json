@@ -30,6 +30,10 @@
 		"vitest": "4.1.10"
 	},
 	"packageManager": "npm@10.8.2",
+	"overrides": {
+		"@emnapi/core": "1.11.2",
+		"@emnapi/runtime": "1.11.2"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/MjavadH/PrayerChime.git"
