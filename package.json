@@ -27,12 +27,18 @@
 		"obsidian": "1.13.1",
 		"tslib": "2.8.1",
 		"typescript": "7.0.2",
-		"vitest": "4.1.10"
+		"vitest": "4.1.10",
+		"@emnapi/core": "1.11.2",
+		"@emnapi/runtime": "1.11.2"
 	},
 	"packageManager": "npm@10.8.2",
 	"overrides": {
 		"@emnapi/core": "1.11.2",
-		"@emnapi/runtime": "1.11.2"
+		"@emnapi/runtime": "1.11.2",
+		"**": {
+			"@emnapi/core": "1.11.2",
+			"@emnapi/runtime": "1.11.2"
+		}
 	},
 	"repository": {
 		"type": "git",
