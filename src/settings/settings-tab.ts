@@ -1,4 +1,4 @@
-import type {App, IconName, SettingDefinition} from "obsidian";
+import type { App, IconName, SettingDefinition } from "obsidian";
 import { PluginSettingTab, Setting, setIcon } from "obsidian";
 import { PRAYER_ORDER, SEARCH_LIMIT } from "../core/constants";
 import { isCalculationMethod } from "../core/settings";
