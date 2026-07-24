@@ -20,14 +20,8 @@
 		"skipLibCheck": true,
 		"noEmit": true,
 
-		"lib": [
-			"DOM",
-			"ES2018",
-			"ES2018.Intl"
-		]
+		"lib": ["DOM", "ES2018", "ES2018.Intl"]
 	},
 
-	"include": [
-		"src/**/*.ts"
-	]
+	"include": ["src/**/*.ts"]
 }

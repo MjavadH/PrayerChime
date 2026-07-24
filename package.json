@@ -12,6 +12,8 @@
 		"test": "vitest run"
 	},
 	"keywords": [
+		"obsidian",
+		"plugin",
 		"prayer-times",
 		"PrayerChime",
 		"iran",
@@ -21,28 +23,17 @@
 	"author": "MjavadH",
 	"license": "MIT",
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.5",
+		"@biomejs/biome": "^2.5.4",
 		"@types/node": "^26.1.1",
 		"esbuild": "0.28.1",
-		"obsidian": "1.13.1",
+		"obsidian": "^1.13.1",
 		"tslib": "2.8.1",
 		"typescript": "7.0.2",
-		"vitest": "4.1.10",
-		"@emnapi/core": "1.11.2",
-		"@emnapi/runtime": "1.11.2"
-	},
-	"packageManager": "npm@10.8.2",
-	"overrides": {
-		"@emnapi/core": "1.11.2",
-		"@emnapi/runtime": "1.11.2",
-		"**": {
-			"@emnapi/core": "1.11.2",
-			"@emnapi/runtime": "1.11.2"
-		}
+		"vitest": "^4.1.10"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/MjavadH/PrayerChime.git"
+		"url": "https://github.com/MjavadH/PrayerChime.git"
 	},
 	"bugs": {
 		"url": "https://github.com/MjavadH/PrayerChime/issues"
