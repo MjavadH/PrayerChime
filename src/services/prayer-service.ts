@@ -1,5 +1,5 @@
 import { CalculationMethod, Coordinates, PrayerTimes } from "./adhan";
-import type { CalculatedPrayerTimes, City, PrayerChimeSettings, PrayerKey, PrayerTimeItem } from "./types";
+import type { CalculatedPrayerTimes, City, PrayerChimeSettings, PrayerKey, PrayerTimeItem } from "../types";
 
 const TIME_ZONE = "Asia/Tehran";
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" });
