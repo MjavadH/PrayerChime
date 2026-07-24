@@ -40,5 +40,9 @@
 	"homepage": "https://github.com/MjavadH/PrayerChime#readme",
 	"contributors": [
 		"MjavadH"
-	]
+	],
+	"dependencies": {
+		"@emnapi/core": "^1.11.2",
+		"@emnapi/runtime": "^1.11.2"
+	}
 }
