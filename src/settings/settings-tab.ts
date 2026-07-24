@@ -21,7 +21,7 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 		/* Intro card */
 		const intro = containerEl.createDiv({ cls: "pc-settings-header" });
 		new Setting(intro)
-			.setName("تنظیمات PrayerChime")
+			.setName("تنظیمات")
 			.setDesc(
 				"روش محاسبه، اوقات نمایشی و شهر مورد نظر خود را انتخاب کنید. تغییرات به‌صورت خودکار ذخیره می‌شوند.",
 			)
@@ -160,9 +160,14 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 
 			cityList.addEventListener("click", (event: MouseEvent) => {
 				const target = event.target;
-				if (!(target instanceof HTMLElement)) return;
-				const starBtn = target.closest<HTMLElement>(".pc-star");
-				const listItem = target?.closest<HTMLLIElement>("li[data-city-id]");
+				if (!(target instanceof Node)) return;
+
+				const starBtn = target.instanceOf(HTMLElement)
+					? target.closest<HTMLElement>(".pc-star")
+					: null;
+				const listItem = target.instanceOf(HTMLElement)
+					? target.closest<HTMLLIElement>("li[data-city-id]")
+					: null;
 				const cityId = listItem?.getAttribute("data-city-id");
 
 				if (!cityId) return;
@@ -234,7 +239,7 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 	}
 
 	private renderSectionHeader(parent: HTMLElement, icon: IconName, title: string): void {
-		const setting = new Setting(parent).setName(title).setHeading();
+		const setting = new Setting(parent).setName(title);
 		setting.settingEl.addClass("pc-section");
 
 		const iconEl = setting.settingEl.createSpan({ cls: "pc-section__icon" });
