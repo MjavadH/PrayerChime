@@ -52,7 +52,7 @@ export class PrayerTimesView extends ItemView {
 
 	private render(): void {
 		const container = this.containerEl.children[1];
-		if (!(container instanceof HTMLElement)) return;
+		if (!container?.instanceOf(HTMLElement)) return;
 
 		container.empty();
 		container.addClass("prayer-chime-view");
