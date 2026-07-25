@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import { STATUS_BAR_UPDATE_INTERVAL_MS, VIEW_TYPE_PRAYER_TIMES } from "./core/constants";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./core/settings";
 import { CityService } from "./services/city-service";
@@ -98,8 +98,8 @@ export default class PrayerChimePlugin extends Plugin {
 			this.statusBarEl.setText(
 				nextPrayer ? `🕌 بعدی: ${nextPrayer.label} ${nextPrayer.time}` : "🕌 پایان اوقات امروز",
 			);
-		} catch (error) {
-			console.warn("PrayerChime: Failed to update status bar", error);
+		} catch (_error) {
+			new Notice("PrayerChime: Failed to update status bar");
 		}
 	}
 

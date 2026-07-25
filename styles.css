@@ -360,12 +360,11 @@
 }
 
 .prayer-chime-settings .pc-section {
-	margin: 18px 0 8px;
-	padding: 8px 0 4px;
+	padding: 9px;
 	border-top: 1px solid var(--pc-border);
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 2px;
 }
 
 .prayer-chime-settings .pc-section__icon {

@@ -31,7 +31,7 @@
 			},
 
 			"suspicious": {
-				"noConsole": "off",
+				"noConsole": "warn",
 				"noDoubleEquals": "error",
 				"noExplicitAny": "error"
 			},
@@ -50,10 +50,14 @@
 
 	"javascript": {
 		"formatter": {
-			"quoteStyle": "double",
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "asNeeded",
 			"trailingCommas": "all",
 			"semicolons": "always",
 			"arrowParentheses": "always",
+			"bracketSameLine": false,
+			"quoteStyle": "double",
+			"attributePosition": "auto",
 			"bracketSpacing": true
 		}
 	},
