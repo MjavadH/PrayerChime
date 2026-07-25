@@ -1,6 +1,6 @@
 {
 	"name": "prayer-chime",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"description": "Offline Obsidian prayer times for Iranian cities",
 	"main": "main.js",
 	"scripts": {
