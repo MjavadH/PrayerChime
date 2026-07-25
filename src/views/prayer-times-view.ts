@@ -19,6 +19,8 @@ export class PrayerTimesView extends ItemView {
 	private nextValueEl: HTMLElement | null = null;
 	private nextLabelEl: HTMLElement | null = null;
 	private nextCountdownEl: HTMLElement | null = null;
+	private headerEl: HTMLElement | null = null;
+	private currentTheme: "morning" | "day" | "evening" | "night" | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PrayerChimePlugin) {
 		super(leaf);
@@ -71,9 +73,13 @@ export class PrayerTimesView extends ItemView {
 			this.lastCalculatedTimes = calculated;
 
 			/* Header */
-			const header = container.createDiv({ cls: "pc-header" });
+			this.headerEl = container.createDiv({ cls: "pc-header" });
 
-			const topRow = header.createDiv({ cls: "pc-header__top" });
+			const initialTheme = this.getThemePeriod(Date.now(), calculated);
+			this.headerEl.addClass(`theme-${initialTheme}`);
+			this.currentTheme = initialTheme;
+
+			const topRow = this.headerEl.createDiv({ cls: "pc-header__top" });
 			const titleWrap = topRow.createDiv({ cls: "pc-header__title-wrap" });
 			titleWrap.createDiv({ cls: "pc-header__eyebrow", text: "اوقات شرعی" });
 			titleWrap.createEl("h3", {
@@ -92,12 +98,12 @@ export class PrayerTimesView extends ItemView {
 				window.setTimeout(() => refreshBtn.removeClass("is-spinning"), REFRESH_SPIN_DURATION_MS);
 			});
 
-			header.createDiv({
+			this.headerEl.createDiv({
 				cls: "pc-header__date",
 				text: formatTodayPersian(),
 			});
 
-			const nextWrap = header.createDiv({ cls: "pc-header__next" });
+			const nextWrap = this.headerEl.createDiv({ cls: "pc-header__next" });
 			const nextTopRow = nextWrap.createDiv({ cls: "pc-header__next-row" });
 			this.nextLabelEl = nextTopRow.createSpan({
 				cls: "pc-header__next-label",
@@ -181,6 +187,17 @@ export class PrayerTimesView extends ItemView {
 				this.nextCountdownEl.setText("پایان اوقات امروز");
 			}
 		}
+		if (this.headerEl && this.lastCalculatedTimes) {
+			const nextTheme = this.getThemePeriod(now, this.lastCalculatedTimes);
+
+			if (this.currentTheme !== nextTheme) {
+				if (this.currentTheme) {
+					this.headerEl.removeClass(`theme-${this.currentTheme}`);
+				}
+				this.headerEl.addClass(`theme-${nextTheme}`);
+				this.currentTheme = nextTheme;
+			}
+		}
 	}
 
 	private startTimer(): void {
@@ -193,5 +210,24 @@ export class PrayerTimesView extends ItemView {
 			window.clearInterval(this.timerId);
 			this.timerId = null;
 		}
+	}
+
+	private getThemePeriod(
+		now: number,
+		times: CalculatedPrayerTimes,
+	): "morning" | "day" | "evening" | "night" {
+		const getTs = (key: PrayerKey): number =>
+			times.items.find((i) => i.key === key)?.timestamp ?? 0;
+
+		const fajr = getTs("fajr");
+		const dhuhr = getTs("dhuhr");
+		const asr = getTs("asr");
+		const maghrib = getTs("maghrib");
+
+		if (now < fajr || now >= maghrib) return "night";
+		if (now >= fajr && now < dhuhr) return "morning";
+		if (now >= dhuhr && now < asr) return "day";
+
+		return "evening";
 	}
 }

@@ -21,20 +21,85 @@
 	padding: 14px 12px 20px;
 }
 
+.pc-header.theme-morning {
+	--pc-header-theme: #f6a97a;
+	--pc-header-theme-2: #ffd28a;
+}
+.pc-header.theme-day {
+	--pc-header-theme: #3b82f6;
+	--pc-header-theme-2: #22d3ee;
+}
+.pc-header.theme-evening {
+	--pc-header-theme: #f97316;
+	--pc-header-theme-2: #db2777;
+}
+.pc-header.theme-night {
+	--pc-header-theme: #4f46e5;
+	--pc-header-theme-2: #1e1b4b;
+}
+
 .pc-header {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	padding: 14px 16px;
 	margin-bottom: 14px;
-	background: linear-gradient(
-		135deg,
-		color-mix(in oklab, var(--pc-accent) 10%, var(--pc-surface)) 0%,
-		var(--pc-surface) 100%
-	);
-	border: 1px solid var(--pc-border);
+	background:
+		linear-gradient(
+			135deg,
+			color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 18%, var(--pc-surface)) 0%,
+			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 10%, var(--pc-surface)) 55%,
+			var(--pc-surface) 100%
+		);
+	border: 1px solid
+	color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 28%, var(--pc-border));
 	border-radius: var(--pc-radius-lg);
+	box-shadow: none;
+	transition:
+		background 900ms var(--pc-ease),
+		border-color 900ms var(--pc-ease),
+		color 900ms var(--pc-ease);
 	animation: pc-fade-down 0.4s var(--pc-ease) both;
+}
+
+.pc-header::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+	background:
+		radial-gradient(
+			120% 90% at 85% -10%,
+			color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 26%, transparent) 0%,
+			transparent 55%
+		),
+		radial-gradient(
+			90% 70% at 0% 110%,
+			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 18%, transparent) 0%,
+			transparent 60%
+		);
+	opacity: 0.9;
+	transition: opacity 900ms var(--pc-ease);
+}
+
+.theme-dark .pc-header {
+	background:
+		linear-gradient(
+			135deg,
+			color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 26%, var(--pc-surface)) 0%,
+			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 14%, var(--pc-surface)) 55%,
+			var(--pc-surface) 100%
+		);
+	border-color: color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 38%, var(--pc-border));
+	box-shadow: none;
+}
+
+.theme-dark .pc-header::before {
+	opacity: 1;
 }
 
 .pc-header__top {
@@ -117,17 +182,20 @@
 .pc-header__date {
 	margin-top: 4px;
 	font-size: 0.82em;
-	color: var(--text-muted);
+	color: color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 55%, var(--text-muted));
 	font-variant-numeric: tabular-nums;
+	transition: color 900ms var(--pc-ease);
 }
 
 .pc-header__next {
 	margin-top: 10px;
 	padding-top: 10px;
-	border-top: 1px dashed var(--pc-border);
+	border-top: 1px dashed
+	color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 45%, var(--pc-border));
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
+	transition: border-color 900ms var(--pc-ease);
 }
 
 .pc-header__next-row {
@@ -139,14 +207,16 @@
 
 .pc-header__next-label {
 	font-size: 0.82em;
-	color: var(--text-muted);
+	color: color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 40%, var(--text-muted));
+	transition: color 900ms var(--pc-ease);
 }
 
 .pc-header__next-value {
 	font-size: 1em;
 	font-weight: 700;
-	color: var(--pc-accent);
+	color: color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 85%, var(--text-normal));
 	font-variant-numeric: tabular-nums;
+	transition: color 900ms var(--pc-ease);
 }
 
 .pc-header__next-countdown {
