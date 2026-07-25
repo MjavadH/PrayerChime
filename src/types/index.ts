@@ -1,3 +1,5 @@
+export type ViewMode = "full" | "compact";
+
 export interface IranDatasetCityRecord {
 	state: string;
 	province: string;
@@ -43,6 +45,7 @@ export interface PrayerChimeSettings {
 	showStatusBar: boolean;
 	calculationMethod: CalculationMethodType;
 	favoriteCityIds: string[];
+	viewMode: ViewMode;
 }
 
 export interface PrayerTimeItem {

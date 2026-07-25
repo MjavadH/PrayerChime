@@ -64,9 +64,12 @@ export default class PrayerChimePlugin extends Plugin {
 	}
 
 	updateViews(): void {
-		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES)) {
-			if (leaf.view instanceof PrayerTimesView) leaf.view.refresh();
-		}
+		this.app.workspace.getLeavesOfType(VIEW_TYPE_PRAYER_TIMES).forEach((leaf) => {
+			if (leaf.view instanceof PrayerTimesView) {
+				leaf.view.refresh();
+				leaf.view.updateViewMode();
+			}
+		});
 	}
 
 	async selectCity(cityId: string): Promise<void> {

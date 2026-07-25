@@ -162,6 +162,10 @@
 	gap: 6px;
 }
 
+.prayer-chime-view.is-compact .pc-list {
+	display: none;
+}
+
 .pc-item {
 	position: relative;
 	display: flex;

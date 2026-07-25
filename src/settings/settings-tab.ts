@@ -1,7 +1,7 @@
 import type { App, IconName, SettingDefinition } from "obsidian";
 import { PluginSettingTab, Setting, setIcon } from "obsidian";
 import { PRAYER_ORDER, SEARCH_LIMIT } from "../core/constants";
-import { isCalculationMethod } from "../core/settings";
+import { isCalculationMethod, isViewMode } from "../core/settings";
 import type PrayerChimePlugin from "../main";
 import type { City } from "../types";
 
@@ -82,6 +82,23 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 						const parsed = parseInt(value, 10);
 						this.plugin.settings.warningIntervalMinutes = Number.isNaN(parsed) ? 10 : parsed;
 						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("حالت نمایش")
+			.setDesc("انتخاب بین حالت کامل (همراه با لیست اوقات) و حالت فشرده (فقط کارت بعدی).")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("full", "کامل")
+					.addOption("compact", "فشرده")
+					.setValue(this.plugin.settings.viewMode)
+					.onChange(async (value: string) => {
+						if (isViewMode(value)) {
+							this.plugin.settings.viewMode = value;
+							await this.plugin.saveSettings();
+							this.plugin.updateViews();
+						}
 					});
 			});
 

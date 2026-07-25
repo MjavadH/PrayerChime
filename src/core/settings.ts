@@ -1,4 +1,4 @@
-import type { PrayerChimeSettings, PrayerDisplaySetting, PrayerKey } from "../types";
+import type { PrayerChimeSettings, PrayerDisplaySetting, PrayerKey, ViewMode } from "../types";
 
 const PRAYER_KEYS: PrayerKey[] = [
 	"fajr",
@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS: PrayerChimeSettings = {
 	showStatusBar: true,
 	calculationMethod: "Tehran",
 	favoriteCityIds: [],
+	viewMode: "full",
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -43,6 +44,9 @@ export const isCalculationMethod = (
 	value === "ISNA" ||
 	value === "MWL" ||
 	value === "UmmAlQura";
+
+export const isViewMode = (value: unknown): value is ViewMode =>
+	value === "full" || value === "compact";
 
 export const normalizeSettings = (loadedData: unknown): PrayerChimeSettings => {
 	if (!isRecord(loadedData)) {
@@ -65,6 +69,7 @@ export const normalizeSettings = (loadedData: unknown): PrayerChimeSettings => {
 		settings.showStatusBar = loadedData.showStatusBar;
 	if (isCalculationMethod(loadedData.calculationMethod))
 		settings.calculationMethod = loadedData.calculationMethod;
+	if (isViewMode(loadedData.viewMode)) settings.viewMode = loadedData.viewMode;
 	if (Array.isArray(loadedData.favoriteCityIds))
 		settings.favoriteCityIds = loadedData.favoriteCityIds.filter(
 			(id): id is string => typeof id === "string",

@@ -39,11 +39,17 @@ export class PrayerTimesView extends ItemView {
 
 	async onOpen(): Promise<void> {
 		this.render();
+		this.updateViewMode();
 		this.startTimer();
 	}
 
 	async onClose(): Promise<void> {
 		this.stopTimer();
+	}
+
+	public updateViewMode(): void {
+		const isCompact = this.plugin.settings.viewMode === "compact";
+		this.contentEl.toggleClass("is-compact", isCompact);
 	}
 
 	refresh(): void {
