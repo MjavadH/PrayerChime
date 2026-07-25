@@ -1,103 +1,125 @@
 # PrayerChime
 
-## Overview
+**PrayerChime** is an offline, Persian-first [Obsidian](https://obsidian.md) plugin that shows Islamic prayer times for cities in Iran. It uses the bundled Iranian city dataset and local calculation code, so daily prayer times are available without calling an external API.
 
-**PrayerChime** is a lightweight, offline, right-to-left friendly [Obsidian](https://obsidian.md) plugin for displaying Islamic prayer times for cities in Iran. It uses local city data and built-in prayer-time calculations, so it does not depend on an external API to show daily times.
+The plugin is now available in **Obsidian Community Plugins**. Installing from Community Plugins is the recommended installation method.
 
-The plugin is designed for users who want quick access to prayer times while writing notes, planning their day, studying, or working inside Obsidian.
-
-## Table of Contents
+## Contents
 
 - [Features](#features)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
+- [Getting started](#getting-started)
+- [How it works](#how-it-works)
 - [Settings](#settings)
-- [Development](#development)
-- [Project Structure](#project-structure)
 - [Privacy](#privacy)
 - [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Project structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
 - [Persian README](REAME-FA.md)
 
 ## Features
 
-- **Offline prayer-time calculation** using local city coordinates.
-- **Iranian city support** through the bundled `data/iran-dataset.json` dataset.
-- **Fast city search** across city, province, and state/region names.
-- **Dedicated Obsidian view** that opens in the right sidebar.
-- **Customizable displayed times** for each prayer-time item.
-- **Visual time status** for past, upcoming, and current prayer times.
-- **Manual and scheduled refresh** with a refresh button and automatic midnight refresh based on Tehran time.
-- **Desktop and mobile compatibility** where supported by Obsidian.
-- **Persian-first UI** with right-to-left layout styles.
+- **Offline prayer times** for Iranian cities using local coordinates and built-in solar calculations.
+- **No external prayer-time API** is required for normal use.
+- **Persian and RTL interface** for the main view and settings page.
+- **Obsidian ribbon action** to open the PrayerChime view.
+- **Dedicated right-sidebar view** with today’s Persian date, selected city, prayer-time list, next time, and countdown.
+- **Status bar item** that can show the next upcoming prayer time.
+- **City search** across city, county/province, and state names.
+- **Favorite cities** for faster switching from the settings page.
+- **Configurable calculation method**: Tehran, Jafari, ISNA, MWL, or Umm al-Qura.
+- **Configurable warning interval** for the “approaching” visual state.
+- **Configurable visible items** for Fajr, sunrise, Dhuhr, Asr, sunset, Maghrib, Isha, and Islamic midnight.
+- **Automatic UI refresh** while the PrayerChime view is open.
+- **Desktop and mobile support** where Obsidian supports community plugins.
 
 ## Installation
 
-### Install from Community Plugins
+### Recommended: install from Community Plugins
 
-> Use this method if PrayerChime is available in the official Obsidian Community Plugins directory.
+PrayerChime has been published in Obsidian Community Plugins, so this is the preferred way to install and update it.
 
 1. Open **Settings** in Obsidian.
 2. Go to **Community plugins**.
-3. Click **Browse**.
-4. Search for **PrayerChime**.
-5. Install and enable the plugin.
+3. If community plugins are disabled, enable them according to Obsidian’s prompt.
+4. Click **Browse**.
+5. Search for **PrayerChime**.
+6. Click **Install**.
+7. Click **Enable**.
 
-### Manual Installation
+### Manual installation
 
-1. Download the latest built release of the plugin.
-2. Create this folder inside your vault:
+Use manual installation only if you need to test a local build or install a release outside Community Plugins.
+
+1. Download or build the plugin files.
+2. Create this folder in your vault:
 
    ```text
    <Vault>/.obsidian/plugins/prayer-chime/
    ```
 
-3. Copy the plugin files into that folder. The required files are:
+3. Copy these files into that folder:
    - `main.js`
    - `manifest.json`
    - `styles.css`
-4. Reload Obsidian or restart the app.
+4. Restart Obsidian or run **Reload app without saving** from the command palette.
 5. Enable **PrayerChime** from **Settings → Community plugins**.
 
-## Quick Start
+## Getting started
 
-1. Enable the plugin in Obsidian.
-2. Open **Settings → PrayerChime**.
-3. Search for and select your city.
-4. Choose which prayer-time entries should be displayed.
-5. Open the PrayerChime view in the right sidebar.
-6. Use **بازنشانی ↻** to refresh the displayed times manually.
+1. Install and enable PrayerChime.
+2. Click the **PrayerChime** ribbon icon, or open the PrayerChime view from Obsidian.
+3. Open **Settings → PrayerChime**.
+4. Select your preferred calculation method if the default Tehran method is not what you need.
+5. Search for your city or province and select the city.
+6. Optionally star cities to add them to favorites.
+7. Choose which prayer-time entries should be shown.
+8. Use the refresh button in the PrayerChime view whenever you want to redraw the view immediately.
 
-## Usage
+If no valid city is selected, PrayerChime falls back to Tehran.
 
-### Select a City
+## How it works
 
-- Open **Settings → PrayerChime**.
-- Type a city or province name in the search box.
-- Select the desired city from the results.
-- Open PrayerChime to see the updated times.
+PrayerChime loads Iranian city data from `src/data/iran-dataset.json`, normalizes the dataset, and assigns each city a stable ID derived from its state, province, city name, latitude, and longitude.
 
-### View Prayer Times
+Prayer times are calculated locally for the current Tehran date and formatted in the `Asia/Tehran` time zone. The view then renders enabled prayer-time items in this order:
 
-The PrayerChime view displays each enabled item with:
+1. Fajr
+2. Sunrise
+3. Dhuhr
+4. Asr
+5. Sunset
+6. Maghrib
+7. Isha
+8. Islamic midnight
 
-- a contextual icon,
-- a Persian label,
-- the calculated time formatted for Tehran time.
+The PrayerChime view updates item states every few seconds:
 
-### Time Statuses
-
-PrayerChime highlights items during the day:
-
-- **Upcoming**: 10 minutes or less before the time.
-- **Current**: when the time has just arrived.
-- **Past**: after the active window has passed.
+- **Upcoming**: the time is later today.
+- **Approaching**: the time is within the configured warning interval.
+- **Now**: the time is within the active threshold around the calculated timestamp.
+- **Past**: the active threshold has passed.
 
 ## Settings
 
-You can enable or disable these displayed entries:
+Open **Settings → PrayerChime** to configure the plugin.
+
+### General settings
+
+- **Calculation method**
+  - Tehran / Institute of Geophysics, University of Tehran
+  - Jafari / Shia Ithna Ashari
+  - ISNA
+  - MWL
+  - Umm al-Qura
+- **Show in status bar**: show or hide the next prayer time in Obsidian’s status bar.
+- **Warning interval**: choose when the view should mark a time as approaching: 5, 10, 15, or 30 minutes before the time.
+
+### Displayed times
+
+Enable or disable each displayed item:
 
 - Fajr
 - Sunrise
@@ -108,95 +130,131 @@ You can enable or disable these displayed entries:
 - Isha
 - Islamic midnight
 
-If no valid city is selected, or if the city dataset cannot be loaded, PrayerChime falls back to Tehran.
+### City picker
+
+- Search by city, county/province, or state.
+- Select a city from the result list.
+- Star cities to keep them in the favorites row.
+- Remove a favorite with the `x` button on the favorite chip.
+
+## Privacy
+
+PrayerChime does not send your location, city selection, vault contents, or prayer-time settings to any external service. City data is bundled with the plugin, prayer times are calculated locally, and plugin preferences are stored through Obsidian’s normal plugin data storage in your vault.
+
+## Troubleshooting
+
+### PrayerChime does not appear
+
+- Confirm that the plugin is installed and enabled in **Settings → Community plugins**.
+- Click the PrayerChime ribbon icon.
+- Check the right sidebar.
+- Reload Obsidian if the view was not registered after installation.
+
+### My city is not found
+
+- Search using the Persian spelling.
+- Search by province or state name.
+- If the city is missing from the bundled dataset, please open an issue or pull request.
+
+### Times look wrong
+
+- Confirm that the selected city is correct.
+- Confirm that the selected calculation method matches your preference.
+- Check whether the displayed time item is sunset or Maghrib; depending on the calculation method, these may differ.
+
+### Nothing is shown in the view
+
+- Make sure at least one prayer-time item is enabled in settings.
+- Reload Obsidian.
+- If you installed manually, confirm that `main.js`, `manifest.json`, and `styles.css` are in the plugin folder.
 
 ## Development
 
 ### Requirements
 
 - [Node.js](https://nodejs.org/)
-- npm
-- An Obsidian vault for local testing
+- [pnpm](https://pnpm.io/) because the project declares `pnpm@11.16.0` as its package manager
+- An Obsidian vault for manual testing
 
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Development Build
+### Install dependencies
 
 ```bash
-npm run dev
+pnpm install
 ```
 
-### Production Build
+### Development build
 
 ```bash
-npm run build
+pnpm run dev
 ```
 
-### Version Bump
+### Production build
 
 ```bash
-npm run version
+pnpm run build
 ```
 
-## Project Structure
+### Run tests
+
+```bash
+pnpm test
+```
+
+### Lint and format
+
+```bash
+pnpm run lint
+```
+
+### Version bump
+
+```bash
+pnpm run version
+```
+
+## Project structure
 
 ```text
 .
-├── adhan.ts                 # Prayer-time calculation logic
-├── city-service.ts          # City loading, validation, and search
-├── data/iran-dataset.json   # Local Iranian city dataset
-├── main.ts                  # Plugin entry point, view, and settings UI
-├── prayer-service.ts        # Display-ready prayer-time preparation
-├── styles.css               # Plugin view and settings styles
-├── types.ts                 # TypeScript types
-├── manifest.json            # Obsidian plugin manifest
-└── package.json             # Development scripts and dependencies
+├── README.md                    # English documentation
+├── REAME-FA.md                  # Persian documentation
+├── manifest.json                # Obsidian plugin manifest
+├── package.json                 # Scripts, metadata, and dev dependencies
+├── styles.css                   # Plugin view and settings styles
+├── tests/                       # Vitest test suite
+└── src/
+    ├── core/
+    │   ├── constants.ts         # View IDs, timing constants, ordering, and icons
+    │   └── settings.ts          # Default settings and settings normalization
+    ├── data/
+    │   └── iran-dataset.json    # Bundled Iranian city dataset
+    ├── services/
+    │   ├── adhan.ts             # Local prayer-time calculation primitives
+    │   ├── city-service.ts      # City dataset parsing, fallback, and search
+    │   └── prayer-service.ts    # Calculation orchestration and time formatting
+    ├── settings/
+    │   └── settings-tab.ts      # Obsidian settings UI
+    ├── types/
+    │   └── index.ts             # Shared TypeScript types
+    ├── utils/
+    │   ├── date.ts              # Tehran date/time constants
+    │   └── format.ts            # Persian digits, countdown, and date formatting
+    ├── views/
+    │   └── prayer-times-view.ts # Obsidian item view renderer
+    └── main.ts                  # Plugin entry point
 ```
-
-## Privacy
-
-PrayerChime does not require an external API for prayer-time calculation. It reads city data from the bundled local dataset. User preferences, such as the selected city and visible prayer-time entries, are stored through Obsidian's plugin data storage in the user's vault.
-
-## Troubleshooting
-
-### I cannot see the PrayerChime view
-
-- Make sure the plugin is enabled.
-- Reload Obsidian.
-- Check the right sidebar.
-
-### My city is not listed
-
-- Try searching with the Persian spelling.
-- Try searching by province name.
-- If the city is missing from the dataset, consider opening an issue or submitting a pull request.
-
-### Prayer times are not displayed
-
-- Confirm that `data/iran-dataset.json` exists in the plugin folder.
-- Reinstall the built plugin files.
-- Check the Obsidian developer console for errors.
 
 ## Contributing
 
-Contributions are welcome. You can help by:
+Contributions are welcome. Useful contributions include bug reports, feature requests, dataset fixes, documentation improvements, tests, and focused pull requests.
 
-- reporting bugs,
-- suggesting new features,
-- improving the city dataset,
-- improving documentation,
-- opening focused pull requests with clear descriptions.
-
-Before submitting a pull request, run:
+Before opening a pull request, run:
 
 ```bash
-npm run build
+pnpm run build
+pnpm test
 ```
 
 ## License
 
-This project is released under the **MIT License**.
+PrayerChime is released under the **MIT License**.
