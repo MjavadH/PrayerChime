@@ -2,6 +2,7 @@ import type { IconName, WorkspaceLeaf } from "obsidian";
 import { ItemView, Menu, Notice, setIcon } from "obsidian";
 import {
 	ACTIVE_PRAYER_THRESHOLD_MS,
+	CELESTIAL_UPDATE_INTERVAL_MS,
 	PRAYER_ICONS,
 	REFRESH_SPIN_DURATION_MS,
 	VIEW_TYPE_PRAYER_TIMES,
@@ -10,6 +11,7 @@ import {
 import type PrayerChimePlugin from "../main";
 import type { CalculatedPrayerTimes, PrayerKey, PrayerTimeItem } from "../types";
 import { formatCountdown, formatTodayPersian, toPersianDigits } from "../utils/format";
+import { CelestialSky } from "./celestial-sky";
 
 export class PrayerTimesView extends ItemView {
 	private readonly plugin: PrayerChimePlugin;
@@ -20,6 +22,8 @@ export class PrayerTimesView extends ItemView {
 	private nextLabelEl: HTMLElement | null = null;
 	private nextCountdownEl: HTMLElement | null = null;
 	private headerEl: HTMLElement | null = null;
+	private sky: CelestialSky | null = null;
+	private lastCelestialUpdateAt: number | null = null;
 	private currentTheme: "morning" | "day" | "evening" | "night" | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: PrayerChimePlugin) {
@@ -47,6 +51,8 @@ export class PrayerTimesView extends ItemView {
 
 	async onClose(): Promise<void> {
 		this.stopTimer();
+		this.sky?.destroy();
+		this.sky = null;
 	}
 
 	public updateViewMode(): void {
@@ -71,9 +77,12 @@ export class PrayerTimesView extends ItemView {
 				this.plugin.cities.getTehran(cities);
 			const calculated = this.plugin.prayer.calculate(city, this.plugin.settings);
 			this.lastCalculatedTimes = calculated;
+			this.lastCelestialUpdateAt = null;
 
 			/* Header */
 			this.headerEl = container.createDiv({ cls: "pc-header" });
+			this.sky?.destroy();
+			this.sky = new CelestialSky(this.headerEl);
 
 			const initialTheme = this.getThemePeriod(Date.now(), calculated);
 			this.headerEl.addClass(`theme-${initialTheme}`);
@@ -89,7 +98,8 @@ export class PrayerTimesView extends ItemView {
 				cls: `pc-header__title${hasFavorites ? " is-clickable" : ""}`,
 			});
 
-			const cityNameStr = city.city === city.province ? city.city : `${city.city}، ${city.province}`;
+			const cityNameStr =
+				city.city === city.province ? city.city : `${city.city}، ${city.province}`;
 			cityTitleEl.createSpan({ text: cityNameStr });
 
 			if (hasFavorites) {
@@ -105,14 +115,16 @@ export class PrayerTimesView extends ItemView {
 						const cityObj = allCities.find((c) => c.id === cityId);
 						if (!cityObj) continue;
 
-						const fCityName = cityObj.city === cityObj.province
-							? cityObj.city
-							: `${cityObj.city}، ${cityObj.province}`;
+						const fCityName =
+							cityObj.city === cityObj.province
+								? cityObj.city
+								: `${cityObj.city}، ${cityObj.province}`;
 
 						const isSelected = this.plugin.settings.selectedCityId === cityId;
 
 						menu.addItem((item) => {
-							item.setTitle(fCityName)
+							item
+								.setTitle(fCityName)
 								.setChecked(isSelected)
 								.onClick(async () => {
 									if (isSelected) return;
@@ -260,6 +272,39 @@ export class PrayerTimesView extends ItemView {
 				this.currentTheme = nextTheme;
 			}
 		}
+
+		if (
+			this.lastCelestialUpdateAt === null ||
+			now - this.lastCelestialUpdateAt >= CELESTIAL_UPDATE_INTERVAL_MS
+		) {
+			this.updateCelestialPosition(now, this.lastCalculatedTimes);
+			this.lastCelestialUpdateAt = now;
+		}
+	}
+
+	private updateCelestialPosition(now: number, times: CalculatedPrayerTimes): void {
+		if (!this.sky) return;
+
+		const getTs = (key: PrayerKey): number | null =>
+			times.items.find((i) => i.key === key)?.timestamp ?? null;
+
+		const sunrise = getTs("sunrise");
+		const sunset = getTs("sunset");
+		if (sunrise === null || sunset === null || sunset <= sunrise) return;
+
+		const dayMs = 24 * 60 * 60 * 1000;
+		const isBeforeSunrise = now < sunrise;
+
+		this.sky.update({
+			now,
+			sunrise,
+			sunset,
+			prevSunset: isBeforeSunrise ? sunset - dayMs : sunset,
+			nextSunrise: isBeforeSunrise ? sunrise : sunrise + dayMs,
+			markers: times.items
+				.filter((item) => item.key !== "sunrise" && item.key !== "sunset")
+				.map((item) => ({ key: item.key, label: item.label, timestamp: item.timestamp })),
+		});
 	}
 
 	private startTimer(): void {

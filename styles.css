@@ -95,6 +95,497 @@
 	transition: opacity 900ms var(--pc-ease);
 }
 
+/* ============================================================
+   Celestial sky — real-time 24h sun/moon orbit dial
+   ============================================================ */
+
+.pc-sky {
+	--pc-sky-sun: #ffd166;
+	--pc-sky-sun-deep: #f97316;
+	--pc-sky-moon: #e8eefc;
+	--pc-sky-moon-deep: #8ea2d8;
+	--pc-body-size: 26px;
+	direction: ltr;
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	overflow: hidden;
+	pointer-events: none;
+	border-radius: inherit;
+	contain: paint;
+}
+
+/* --- Atmosphere ------------------------------------------------ */
+
+.pc-sky__atmos {
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(
+			130% 110% at var(--pc-sun-x, 50%) var(--pc-sun-y, 100%),
+			color-mix(in oklab, var(--pc-sky-sun) calc(34% * var(--pc-daylight, 0)), transparent) 0%,
+			transparent 58%
+		),
+		radial-gradient(
+			110% 95% at var(--pc-moon-x, 50%) var(--pc-moon-y, 100%),
+			color-mix(in oklab, var(--pc-sky-moon) calc(20% * var(--pc-nightness, 1)), transparent) 0%,
+			transparent 52%
+		),
+		linear-gradient(
+			175deg,
+			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-accent)) 20%, transparent) 0%,
+			color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 12%, transparent) 60%,
+			transparent 100%
+		);
+	transition:
+		background 1400ms var(--pc-ease),
+		opacity 1400ms var(--pc-ease);
+}
+
+/* Horizon-hugging twilight band: peaks exactly at sunrise/sunset. */
+.pc-sky__glow {
+	position: absolute;
+	inset: auto 0 0 0;
+	height: 62%;
+	opacity: calc(0.25 + 0.75 * var(--pc-twilight, 0));
+	background: linear-gradient(
+		to top,
+		color-mix(in oklab, var(--pc-sky-sun-deep) 40%, transparent) 0%,
+		color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 18%, transparent) 45%,
+		transparent 100%
+	);
+	filter: blur(6px);
+	transition:
+		opacity 1400ms var(--pc-ease),
+		background 1400ms var(--pc-ease);
+}
+
+/* Readability scrim: keeps header text crisp over a busy sky. */
+.pc-sky__scrim {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		to bottom,
+		transparent 0%,
+		color-mix(in oklab, var(--pc-surface) 30%, transparent) 62%,
+		color-mix(in oklab, var(--pc-surface) 55%, transparent) 100%
+	);
+}
+
+.pc-sky__horizon {
+	position: absolute;
+	left: 3%;
+	right: 3%;
+	top: 86%;
+	height: 1px;
+	background: linear-gradient(
+		to right,
+		transparent,
+		color-mix(in oklab, var(--pc-header-theme-2, var(--pc-accent)) 55%, transparent) 18%,
+		color-mix(in oklab, var(--pc-sky-sun) calc(70% * var(--pc-twilight, 0)), var(--pc-border)) 50%,
+		color-mix(in oklab, var(--pc-header-theme-2, var(--pc-accent)) 55%, transparent) 82%,
+		transparent
+	);
+	opacity: 0.55;
+	box-shadow: 0 0 calc(10px * var(--pc-twilight, 0))
+		color-mix(in oklab, var(--pc-sky-sun) 60%, transparent);
+	transition:
+		box-shadow 1400ms var(--pc-ease),
+		opacity 1400ms var(--pc-ease);
+}
+
+/* --- Stars & meteor -------------------------------------------- */
+
+.pc-sky__stars {
+	position: absolute;
+	inset: 0;
+	opacity: calc(var(--pc-nightness, 1) * 0.95);
+	transition: opacity 1600ms var(--pc-ease);
+}
+
+.pc-sky__star {
+	position: absolute;
+	border-radius: 50%;
+	background: #ffffff;
+	opacity: 0;
+	animation: pc-twinkle var(--pc-star-duration, 3s) var(--pc-ease) infinite;
+	animation-delay: var(--pc-star-delay, 0s);
+}
+
+@keyframes pc-twinkle {
+	0%,
+	100% {
+		opacity: calc(var(--pc-star-peak, 0.6) * 0.18);
+		transform: scale(0.75);
+	}
+	50% {
+		opacity: var(--pc-star-peak, 0.6);
+		transform: scale(1);
+	}
+}
+
+.pc-sky__meteor {
+	position: absolute;
+	top: 12%;
+	left: -12%;
+	width: 70px;
+	height: 1px;
+	border-radius: 999px;
+	transform-origin: left center;
+	background: linear-gradient(to right, color-mix(in oklab, #ffffff 0%, transparent), #ffffff);
+	opacity: 0;
+	filter: drop-shadow(0 0 4px color-mix(in oklab, #cbd5ff 70%, transparent));
+}
+
+.pc-sky.is-night .pc-sky__meteor {
+	animation: pc-meteor 19s linear infinite;
+	animation-delay: 6s;
+}
+
+@keyframes pc-meteor {
+	0% {
+		opacity: 0;
+		transform: translate3d(0, 0, 0) rotate(18deg) scaleX(0.2);
+	}
+	3% {
+		opacity: 0.9;
+	}
+	11% {
+		opacity: 0;
+		transform: translate3d(160px, 58px, 0) rotate(18deg) scaleX(1);
+	}
+	100% {
+		opacity: 0;
+		transform: translate3d(160px, 58px, 0) rotate(18deg) scaleX(1);
+	}
+}
+
+/* --- Clouds ----------------------------------------------------- */
+
+.pc-sky__clouds {
+	position: absolute;
+	inset: 0;
+	opacity: calc(var(--pc-daylight, 0) * 0.24);
+	transition: opacity 1600ms var(--pc-ease);
+}
+
+.pc-sky__cloud {
+	position: absolute;
+	border-radius: 999px;
+	background: radial-gradient(
+		closest-side,
+		color-mix(in oklab, #ffffff 70%, transparent),
+		transparent
+	);
+	filter: blur(9px);
+}
+
+.pc-sky__cloud--a {
+	top: 22%;
+	left: -18%;
+	width: 46%;
+	height: 26%;
+	animation: pc-drift 68s linear infinite;
+}
+
+.pc-sky__cloud--b {
+	top: 46%;
+	left: -30%;
+	width: 34%;
+	height: 20%;
+	opacity: 0.7;
+	animation: pc-drift 96s linear infinite;
+	animation-delay: -34s;
+}
+
+@keyframes pc-drift {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(340%);
+	}
+}
+
+/* --- Orbit ------------------------------------------------------ */
+
+.pc-sky__svg {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+.pc-sky__orbit {
+	fill: none;
+	stroke-linecap: round;
+	transition:
+		stroke 1200ms var(--pc-ease),
+		opacity 1200ms var(--pc-ease);
+}
+
+.pc-sky__orbit--track {
+	stroke: color-mix(in oklab, var(--pc-header-theme-2, var(--pc-accent)) 40%, transparent);
+	stroke-width: 1;
+	stroke-dasharray: 2 4;
+	opacity: 0.5;
+}
+
+.pc-sky__orbit--under {
+	stroke: color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 26%, transparent);
+	stroke-width: 1;
+	stroke-dasharray: 1 6;
+	opacity: 0.28;
+}
+
+/* --- Prayer ticks on the arc ------------------------------------ */
+
+.pc-sky__ticks {
+	position: absolute;
+	inset: 0;
+}
+
+.pc-sky__tick {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	animation: pc-tick-in 0.5s var(--pc-ease) both;
+}
+
+.pc-sky__tick-dot {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: color-mix(in oklab, #ffffff 45%, transparent);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--pc-surface) 45%, transparent);
+	transition:
+		background 800ms var(--pc-ease),
+		transform 500ms var(--pc-ease);
+}
+
+.pc-sky__tick.is-passed .pc-sky__tick-dot {
+	background: color-mix(in oklab, var(--pc-sky-sun) 70%, var(--pc-accent));
+}
+
+.pc-sky.is-night .pc-sky__tick.is-passed .pc-sky__tick-dot {
+	background: color-mix(in oklab, var(--pc-sky-moon) 70%, var(--pc-accent));
+}
+
+.pc-sky__tick.is-imminent .pc-sky__tick-dot {
+	transform: scale(1.5);
+	animation: pc-tick-pulse 2.2s var(--pc-ease) infinite;
+}
+
+@keyframes pc-tick-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.4);
+	}
+	to {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
+}
+
+@keyframes pc-tick-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 color-mix(in oklab, var(--pc-sky-sun) 45%, transparent);
+	}
+	60% {
+		box-shadow: 0 0 0 6px color-mix(in oklab, var(--pc-sky-sun) 0%, transparent);
+	}
+}
+
+/* --- Celestial bodies ------------------------------------------- */
+
+.pc-sky__body {
+	position: absolute;
+	width: var(--pc-body-size);
+	height: var(--pc-body-size);
+	margin: 0;
+	will-change: left, top, opacity;
+	transition:
+		left 1400ms var(--pc-ease),
+		top 1400ms var(--pc-ease),
+		opacity 1400ms var(--pc-ease),
+		filter 1400ms var(--pc-ease);
+}
+
+.pc-sky__body--sun {
+	left: var(--pc-sun-x, 96%);
+	top: var(--pc-sun-y, 86%);
+	opacity: var(--pc-sun-opacity, 0);
+	transform: translate(-50%, -50%);
+}
+
+.pc-sky__body--moon {
+	left: var(--pc-moon-x, 96%);
+	top: var(--pc-moon-y, 86%);
+	opacity: var(--pc-moon-opacity, 1);
+	transform: translate(-50%, -50%);
+}
+
+.pc-sky__body > * {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+}
+
+/* Sun */
+
+.pc-sky__sun-core {
+	background: radial-gradient(
+		circle at 34% 32%,
+		#fffbe6 0%,
+		var(--pc-sky-sun) 46%,
+		var(--pc-sky-sun-deep) 100%
+	);
+	box-shadow:
+		0 0 10px color-mix(in oklab, var(--pc-sky-sun) 85%, transparent),
+		0 0 22px color-mix(in oklab, var(--pc-sky-sun-deep) 60%, transparent);
+	transform: scale(calc(0.62 * var(--pc-sun-scale, 1)));
+	transition: transform 1400ms var(--pc-ease);
+}
+
+.pc-sky__sun-halo {
+	background: radial-gradient(
+		circle,
+		color-mix(in oklab, var(--pc-sky-sun) 45%, transparent) 0%,
+		transparent 68%
+	);
+	transform: scale(calc(1.7 * var(--pc-sun-scale, 1)));
+	animation: pc-breathe 6.5s ease-in-out infinite;
+}
+
+.pc-sky__sun-rays {
+	background: conic-gradient(
+		from 0deg,
+		color-mix(in oklab, var(--pc-sky-sun) 55%, transparent) 0deg 6deg,
+		transparent 6deg 30deg
+	);
+	mask-image: radial-gradient(circle, transparent 34%, #000 40%, #000 62%, transparent 70%);
+	-webkit-mask-image: radial-gradient(circle, transparent 34%, #000 40%, #000 62%, transparent 70%);
+	transform: scale(calc(1.85 * var(--pc-sun-scale, 1)));
+	opacity: calc(0.35 + 0.4 * var(--pc-daylight, 0));
+	animation: pc-orbit-spin 44s linear infinite;
+}
+
+@keyframes pc-orbit-spin {
+	to {
+		transform: rotate(360deg) scale(calc(1.85 * var(--pc-sun-scale, 1)));
+	}
+}
+
+@keyframes pc-breathe {
+	0%,
+	100% {
+		opacity: 0.75;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+/* Moon */
+
+.pc-sky__moon-halo {
+	background: radial-gradient(
+		circle,
+		color-mix(in oklab, var(--pc-sky-moon) 38%, transparent) 0%,
+		transparent 70%
+	);
+	transform: scale(1.75);
+	animation: pc-breathe 8s ease-in-out infinite;
+}
+
+.pc-sky__moon-disc {
+	overflow: hidden;
+	transform: scale(0.6);
+	background: radial-gradient(
+		circle at 36% 34%,
+		#ffffff 0%,
+		var(--pc-sky-moon) 55%,
+		var(--pc-sky-moon-deep) 100%
+	);
+	box-shadow:
+		inset -2px -2px 5px color-mix(in oklab, var(--pc-sky-moon-deep) 55%, transparent),
+		0 0 12px color-mix(in oklab, var(--pc-sky-moon) 55%, transparent);
+}
+
+.pc-sky__moon-crater {
+	position: absolute;
+	border-radius: 50%;
+	background: color-mix(in oklab, var(--pc-sky-moon-deep) 34%, transparent);
+	opacity: 0.55;
+}
+
+.pc-sky__moon-crater--a {
+	width: 26%;
+	height: 26%;
+	top: 22%;
+	left: 24%;
+}
+
+.pc-sky__moon-crater--b {
+	width: 17%;
+	height: 17%;
+	top: 56%;
+	left: 52%;
+}
+
+.pc-sky__moon-crater--c {
+	width: 12%;
+	height: 12%;
+	top: 34%;
+	left: 62%;
+}
+
+/* Phase terminator: an offset shadow disc driven by real illumination. */
+.pc-sky__moon-shadow {
+	position: absolute;
+	inset: -1%;
+	border-radius: 50%;
+	background: color-mix(in oklab, var(--pc-surface) 78%, #0b1020);
+	transform: translateX(var(--pc-moon-shadow-x, -100%));
+	opacity: calc(1 - 0.12 * var(--pc-moon-lit, 1));
+	transition: transform 1600ms var(--pc-ease);
+}
+
+/* --- Theme intensities ------------------------------------------ */
+
+.pc-header.theme-morning .pc-sky__atmos {
+	opacity: 0.88;
+}
+
+.pc-header.theme-day .pc-sky__atmos {
+	opacity: 0.76;
+}
+
+.pc-header.theme-evening .pc-sky__atmos {
+	opacity: 0.94;
+}
+
+.pc-header.theme-night .pc-sky__atmos {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pc-sky__star,
+	.pc-sky__meteor,
+	.pc-sky__cloud,
+	.pc-sky__sun-rays,
+	.pc-sky__sun-halo,
+	.pc-sky__moon-halo,
+	.pc-sky__tick.is-imminent .pc-sky__tick-dot {
+		animation: none;
+	}
+
+	.pc-sky__body {
+		transition-duration: 0ms;
+	}
+}
+
 .theme-dark .pc-header {
 	background: linear-gradient(
 		135deg,
@@ -207,6 +698,11 @@
 
 .pc-header__refresh.is-spinning .svg-icon {
 	animation: pc-spin 0.6s var(--pc-ease);
+}
+
+.pc-header > :not(.pc-sky) {
+	position: relative;
+	z-index: 1;
 }
 
 @keyframes pc-spin {
