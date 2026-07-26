@@ -101,7 +101,7 @@ export default class PrayerChimePlugin extends Plugin {
 			this.statusBarEl.setText(
 				nextPrayer ? `🕌 بعدی: ${nextPrayer.label} ${nextPrayer.time}` : "🕌 پایان اوقات امروز",
 			);
-		} catch (_error) {
+		} catch {
 			new Notice("PrayerChime: Failed to update status bar");
 		}
 	}

@@ -73,6 +73,7 @@ export class PrayerChimeSettingTab extends PluginSettingTab {
 			.setDesc("چند دقیقه پیش از اذان وضعیت به «در حال نزدیک شدن» تغییر کند.")
 			.addDropdown((dropdown) => {
 				dropdown
+					.addOption("0", "بدون هشدار")
 					.addOption("5", "۵ دقیقه")
 					.addOption("10", "۱۰ دقیقه (پیش‌فرض)")
 					.addOption("15", "۱۵ دقیقه")

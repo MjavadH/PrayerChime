@@ -1,4 +1,5 @@
 import type { PrayerChimeSettings, PrayerDisplaySetting, PrayerKey, ViewMode } from "../types";
+import { DEFAULT_WARNING_INTERVAL_MINUTES } from "./constants";
 
 const PRAYER_KEYS: PrayerKey[] = [
 	"fajr",
@@ -23,7 +24,7 @@ export const DEFAULT_SETTINGS: PrayerChimeSettings = {
 		isha: { display: true, text: "اذان عشاء" },
 		midnight: { display: true, text: "نیمه‌شب شرعی" },
 	},
-	warningIntervalMinutes: 10,
+	warningIntervalMinutes: DEFAULT_WARNING_INTERVAL_MINUTES,
 	showStatusBar: true,
 	calculationMethod: "Tehran",
 	favoriteCityIds: [],

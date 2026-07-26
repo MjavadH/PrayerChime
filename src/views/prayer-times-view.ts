@@ -106,35 +106,40 @@ export class PrayerTimesView extends ItemView {
 				const iconEl = cityTitleEl.createSpan({ cls: "pc-header__chevron" });
 				setIcon(iconEl, "chevron-down");
 
-				cityTitleEl.addEventListener("click", async (event: MouseEvent) => {
-					const menu = new Menu();
-					const allCities = await this.plugin.cities.getCities();
-					const limitedFavorites = favoriteIds.slice(0, 10);
+				cityTitleEl.addEventListener("click", (event: MouseEvent) => {
+					void (async () => {
+						const menu = new Menu();
+						const allCities = await this.plugin.cities.getCities();
+						const limitedFavorites = favoriteIds.slice(0, 10);
 
-					for (const cityId of limitedFavorites) {
-						const cityObj = allCities.find((c) => c.id === cityId);
-						if (!cityObj) continue;
+						for (const cityId of limitedFavorites) {
+							const cityObj = allCities.find((c) => c.id === cityId);
+							if (!cityObj) continue;
 
-						const fCityName =
-							cityObj.city === cityObj.province
-								? cityObj.city
-								: `${cityObj.city}، ${cityObj.province}`;
+							const fCityName =
+								cityObj.city === cityObj.province
+									? cityObj.city
+									: `${cityObj.city}، ${cityObj.province}`;
 
-						const isSelected = this.plugin.settings.selectedCityId === cityId;
+							const isSelected = this.plugin.settings.selectedCityId === cityId;
 
-						menu.addItem((item) => {
-							item
-								.setTitle(fCityName)
-								.setChecked(isSelected)
-								.onClick(async () => {
-									if (isSelected) return;
-									this.plugin.settings.selectedCityId = cityId;
-									await this.plugin.saveSettings();
-									this.refresh();
-								});
-						});
-					}
-					menu.showAtMouseEvent(event);
+							menu.addItem((item) => {
+								item
+									.setTitle(fCityName)
+									.setChecked(isSelected)
+									.onClick(async () => {
+										if (isSelected) return;
+										this.plugin.settings.selectedCityId = cityId;
+										await this.plugin.saveSettings();
+										this.refresh();
+									});
+							});
+						}
+
+						menu.showAtMouseEvent(event);
+					})().catch((err) => {
+						new Notice(err);
+					});
 				});
 			}
 
