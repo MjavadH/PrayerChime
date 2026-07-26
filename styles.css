@@ -742,6 +742,10 @@
 	font-variant-numeric: tabular-nums;
 	transition: color 900ms var(--pc-ease);
 }
+.pc-header__next-value.hidden,
+.pc-header__next-label.hidden {
+	display: none;
+}
 
 .pc-header__next-countdown {
 	font-size: 0.82em;

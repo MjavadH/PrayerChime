@@ -257,12 +257,14 @@ export class PrayerTimesView extends ItemView {
 
 		if (this.nextValueEl && this.nextLabelEl && this.nextCountdownEl) {
 			if (nextItem) {
+				this.nextLabelEl.removeClass("hidden");
+				this.nextValueEl.removeClass("hidden");
 				this.nextLabelEl.setText(`وقت بعدی · ${nextItem.label}`);
 				this.nextValueEl.setText(toPersianDigits(nextItem.time));
 				this.nextCountdownEl.setText(formatCountdown(nextItem.timestamp - now));
 			} else {
-				this.nextLabelEl.setText("وقت بعدی");
-				this.nextValueEl.setText("—");
+				this.nextLabelEl.addClass("hidden");
+				this.nextValueEl.addClass("hidden");
 				this.nextCountdownEl.setText("پایان اوقات امروز");
 			}
 		}
