@@ -47,15 +47,19 @@
 	gap: 4px;
 	padding: 14px 16px;
 	margin-bottom: 14px;
-	background:
-		linear-gradient(
-			135deg,
-			color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 18%, var(--pc-surface)) 0%,
-			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 10%, var(--pc-surface)) 55%,
-			var(--pc-surface) 100%
-		);
+	background: linear-gradient(
+		135deg,
+		color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 18%, var(--pc-surface)) 0%,
+		color-mix(
+				in oklab,
+				var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 10%,
+				var(--pc-surface)
+			)
+			55%,
+		var(--pc-surface) 100%
+	);
 	border: 1px solid
-	color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 28%, var(--pc-border));
+		color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 28%, var(--pc-border));
 	border-radius: var(--pc-radius-lg);
 	box-shadow: none;
 	transition:
@@ -79,7 +83,12 @@
 		),
 		radial-gradient(
 			90% 70% at 0% 110%,
-			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 18%, transparent) 0%,
+			color-mix(
+					in oklab,
+					var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 18%,
+					transparent
+				)
+				0%,
 			transparent 60%
 		);
 	opacity: 0.9;
@@ -87,13 +96,17 @@
 }
 
 .theme-dark .pc-header {
-	background:
-		linear-gradient(
-			135deg,
-			color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 26%, var(--pc-surface)) 0%,
-			color-mix(in oklab, var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 14%, var(--pc-surface)) 55%,
-			var(--pc-surface) 100%
-		);
+	background: linear-gradient(
+		135deg,
+		color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 26%, var(--pc-surface)) 0%,
+		color-mix(
+				in oklab,
+				var(--pc-header-theme-2, var(--pc-header-theme, var(--pc-accent))) 14%,
+				var(--pc-surface)
+			)
+			55%,
+		var(--pc-surface) 100%
+	);
 	border-color: color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 38%, var(--pc-border));
 	box-shadow: none;
 }
@@ -191,7 +204,7 @@
 	margin-top: 10px;
 	padding-top: 10px;
 	border-top: 1px dashed
-	color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 45%, var(--pc-border));
+		color-mix(in oklab, var(--pc-header-theme, var(--pc-accent)) 45%, var(--pc-border));
 	display: flex;
 	flex-direction: column;
 	gap: 4px;

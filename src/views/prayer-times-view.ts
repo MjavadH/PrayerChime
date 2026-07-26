@@ -1,5 +1,5 @@
 import type { IconName, WorkspaceLeaf } from "obsidian";
-import { ItemView, setIcon } from "obsidian";
+import { ItemView, Menu, Notice, setIcon } from "obsidian";
 import {
 	ACTIVE_PRAYER_THRESHOLD_MS,
 	PRAYER_ICONS,
@@ -137,7 +137,30 @@ export class PrayerTimesView extends ItemView {
 					setIcon(iconEl, PRAYER_ICONS[item.key]);
 					left.createSpan({ cls: "pc-item__label", text: item.label });
 
-					itemEl.createSpan({ cls: "pc-item__time", text: toPersianDigits(item.time) });
+					const timeStr = toPersianDigits(item.time);
+					itemEl.createSpan({ cls: "pc-item__time", text: timeStr });
+
+					itemEl.addEventListener("contextmenu", (event: MouseEvent) => {
+						event.preventDefault();
+						const menu = new Menu();
+
+						menu.addItem((menuItem) => {
+							menuItem
+								.setTitle("کپی")
+								.setIcon("copy")
+								.onClick(async () => {
+									const textToCopy = `${item.label}: ${timeStr}`;
+									try {
+										await navigator.clipboard.writeText(textToCopy);
+										new Notice(`کپی شد: ${textToCopy}`);
+									} catch {
+										new Notice("خطا در کپی کردن اطلاعات");
+									}
+								});
+						});
+
+						menu.showAtMouseEvent(event);
+					});
 				}
 			}
 
