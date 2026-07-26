@@ -145,6 +145,32 @@
 	line-height: 1.25;
 }
 
+.pc-header__title.is-clickable {
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	border-radius: var(--pc-radius-sm);
+	padding: 2px 4px;
+	margin-inline-start: -4px;
+	transition: background-color 0.15s var(--pc-ease);
+}
+
+.pc-header__title.is-clickable:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.pc-header__chevron {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.pc-header__chevron svg {
+	width: 14px;
+	height: 14px;
+}
+
 .pc-header__refresh {
 	flex-shrink: 0;
 	display: inline-flex;

@@ -82,10 +82,49 @@ export class PrayerTimesView extends ItemView {
 			const topRow = this.headerEl.createDiv({ cls: "pc-header__top" });
 			const titleWrap = topRow.createDiv({ cls: "pc-header__title-wrap" });
 			titleWrap.createDiv({ cls: "pc-header__eyebrow", text: "اوقات شرعی" });
-			titleWrap.createEl("h3", {
-				cls: "pc-header__title",
-				text: city.city,
+			const favoriteIds = this.plugin.settings.favoriteCityIds || [];
+			const hasFavorites = favoriteIds.length > 1;
+
+			const cityTitleEl = titleWrap.createEl("h3", {
+				cls: `pc-header__title${hasFavorites ? " is-clickable" : ""}`,
 			});
+
+			const cityNameStr = city.city === city.province ? city.city : `${city.city}، ${city.province}`;
+			cityTitleEl.createSpan({ text: cityNameStr });
+
+			if (hasFavorites) {
+				const iconEl = cityTitleEl.createSpan({ cls: "pc-header__chevron" });
+				setIcon(iconEl, "chevron-down");
+
+				cityTitleEl.addEventListener("click", async (event: MouseEvent) => {
+					const menu = new Menu();
+					const allCities = await this.plugin.cities.getCities();
+					const limitedFavorites = favoriteIds.slice(0, 10);
+
+					for (const cityId of limitedFavorites) {
+						const cityObj = allCities.find((c) => c.id === cityId);
+						if (!cityObj) continue;
+
+						const fCityName = cityObj.city === cityObj.province
+							? cityObj.city
+							: `${cityObj.city}، ${cityObj.province}`;
+
+						const isSelected = this.plugin.settings.selectedCityId === cityId;
+
+						menu.addItem((item) => {
+							item.setTitle(fCityName)
+								.setChecked(isSelected)
+								.onClick(async () => {
+									if (isSelected) return;
+									this.plugin.settings.selectedCityId = cityId;
+									await this.plugin.saveSettings();
+									this.refresh();
+								});
+						});
+					}
+					menu.showAtMouseEvent(event);
+				});
+			}
 
 			const refreshBtn = topRow.createEl("button", {
 				cls: "pc-header__refresh",
