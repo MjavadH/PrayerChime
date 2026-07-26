@@ -95,10 +95,7 @@
 	transition: opacity 900ms var(--pc-ease);
 }
 
-/* ============================================================
-   Celestial sky — real-time 24h sun/moon orbit dial
-   ============================================================ */
-
+/* Celestial sky */
 .pc-sky {
 	--pc-sky-sun: #ffd166;
 	--pc-sky-sun-deep: #f97316;
@@ -115,8 +112,7 @@
 	contain: paint;
 }
 
-/* --- Atmosphere ------------------------------------------------ */
-
+/* Atmosphere */
 .pc-sky__atmos {
 	position: absolute;
 	inset: 0;
@@ -194,8 +190,7 @@
 		opacity 1400ms var(--pc-ease);
 }
 
-/* --- Stars & meteor -------------------------------------------- */
-
+/* Stars & meteor */
 .pc-sky__stars {
 	position: absolute;
 	inset: 0;
@@ -260,8 +255,7 @@
 	}
 }
 
-/* --- Clouds ----------------------------------------------------- */
-
+/* Clouds */
 .pc-sky__clouds {
 	position: absolute;
 	inset: 0;
@@ -307,8 +301,7 @@
 	}
 }
 
-/* --- Orbit ------------------------------------------------------ */
-
+/* Orbit */
 .pc-sky__svg {
 	position: absolute;
 	inset: 0;
@@ -339,8 +332,7 @@
 	opacity: 0.28;
 }
 
-/* --- Prayer ticks on the arc ------------------------------------ */
-
+/* Prayer ticks on the arc */
 .pc-sky__ticks {
 	position: absolute;
 	inset: 0;
@@ -397,8 +389,7 @@
 	}
 }
 
-/* --- Celestial bodies ------------------------------------------- */
-
+/* Celestial bodies */
 .pc-sky__body {
 	position: absolute;
 	width: var(--pc-body-size);
@@ -433,7 +424,6 @@
 }
 
 /* Sun */
-
 .pc-sky__sun-core {
 	background: radial-gradient(
 		circle at 34% 32%,
@@ -488,7 +478,6 @@
 }
 
 /* Moon */
-
 .pc-sky__moon-halo {
 	background: radial-gradient(
 		circle,
@@ -552,7 +541,7 @@
 	transition: transform 1600ms var(--pc-ease);
 }
 
-/* --- Theme intensities ------------------------------------------ */
+/* Theme intensities */
 
 .pc-header.theme-morning .pc-sky__atmos {
 	opacity: 0.88;

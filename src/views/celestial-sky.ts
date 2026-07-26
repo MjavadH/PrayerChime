@@ -1,20 +1,3 @@
-/**
- * CelestialSky
- * -------------------------------------------------------------
- * A self-contained, real-time 24h sky dial for the PrayerChime header.
- *
- * It renders:
- *   - an elliptical orbit track (visible arc above the horizon, ghost arc below)
- *   - a progress arc that fills as the active body travels its arc
- *   - prayer-time tick markers placed on the active arc
- *   - a horizon line whose glow reacts to twilight
- *   - a twinkling star field + drifting meteor (night) and soft clouds (day)
- *   - the sun (rotating corona) and the moon (real lunar phase shading)
- *
- * All positions are expressed in a 0..100 coordinate space so the SVG paths
- * and the HTML bodies stay perfectly aligned regardless of header size.
- */
-
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /* Orbit geometry (0..100 space) */
@@ -199,10 +182,6 @@ export class CelestialSky {
 		const dawnBlend = smoothstep(sunrise - TWILIGHT_MS, sunrise + TWILIGHT_MS, now);
 		const duskBlend = 1 - smoothstep(sunset - TWILIGHT_MS, sunset + TWILIGHT_MS, now);
 
-		/* Body placement: one continuous wheel. The active body rides the visible
-		   arc left -> right, while the dormant body sits 180 deg behind on the
-		   sub-horizon arc (travelling right -> left) so that the instant the sun
-		   sets on the right, the moon is already rising on the left. No jumps. */
 		const sunPos = isDay
 			? pointAt(dayProgress, RY, false)
 			: pointAt(1 - nightProgress, UNDER_RY, true);
