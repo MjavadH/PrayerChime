@@ -449,19 +449,22 @@
 }
 
 .pc-sky__sun-rays {
-	background: conic-gradient(
+	background: repeating-conic-gradient(
 		from 0deg,
 		color-mix(in oklab, var(--pc-sky-sun) 55%, transparent) 0deg 6deg,
 		transparent 6deg 30deg
 	);
 	mask-image: radial-gradient(circle, transparent 34%, #000 40%, #000 62%, transparent 70%);
 	-webkit-mask-image: radial-gradient(circle, transparent 34%, #000 40%, #000 62%, transparent 70%);
-	transform: scale(calc(1.85 * var(--pc-sun-scale, 1)));
+	transform: rotate(0deg) scale(calc(1.85 * var(--pc-sun-scale, 1)));
 	opacity: calc(0.35 + 0.4 * var(--pc-daylight, 0));
 	animation: pc-orbit-spin 44s linear infinite;
 }
 
 @keyframes pc-orbit-spin {
+	from {
+		transform: rotate(0deg) scale(calc(1.85 * var(--pc-sun-scale, 1)));
+	}
 	to {
 		transform: rotate(360deg) scale(calc(1.85 * var(--pc-sun-scale, 1)));
 	}

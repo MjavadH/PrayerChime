@@ -44,7 +44,7 @@ const smoothstep = (edge0: number, edge1: number, value: number): number => {
 /**
  * Position on the orbit for progress `p` (0 = rise point, 1 = set point).
  * The dial runs left-to-right: bodies rise on the left edge, culminate at the
- * centre and set on the right edge.
+ * center and set on the right edge.
  */
 const pointAt = (p: number, ry: number, below: boolean): { x: number; y: number } => {
 	const angle = Math.PI * clamp(p, 0, 1);
