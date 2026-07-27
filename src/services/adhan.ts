@@ -84,19 +84,23 @@ const hourAngle = (latitude: number, declination: number, altitude: number): num
 	return radiansToDegrees(Math.acos(value)) / 15;
 };
 
-const dateFromLocalHours = (date: Date, hours: number): Date => {
+const dateFromLocalHours = (date: Date, hours: number, timezoneOffset: number): Date => {
 	const normalized = normalizeHours(hours);
 	const wholeHours = Math.floor(normalized);
 	const minutesFloat = (normalized - wholeHours) * 60;
 	const wholeMinutes = Math.floor(minutesFloat);
 	const seconds = Math.round((minutesFloat - wholeMinutes) * 60);
+
+	const offsetHours = Math.floor(timezoneOffset);
+	const offsetMinutes = Math.round((timezoneOffset - offsetHours) * 60);
+
 	return new Date(
 		Date.UTC(
 			date.getUTCFullYear(),
 			date.getUTCMonth(),
 			date.getUTCDate(),
-			wholeHours - 3,
-			wholeMinutes - 30,
+			wholeHours - offsetHours,
+			wholeMinutes - offsetMinutes,
 			seconds,
 		),
 	);
@@ -112,7 +116,12 @@ export class PrayerTimes {
 	readonly isha: Date;
 	readonly midnight: Date;
 
-	constructor(coordinates: Coordinates, date: Date, parameters: CalculationParameters) {
+	constructor(
+		coordinates: Coordinates,
+		date: Date,
+		parameters: CalculationParameters,
+		timezoneOffset: number = 3.5,
+	) {
 		const n = dayOfYear(date);
 		const meanAnomaly = normalizeDegrees(357.5291 + 0.98560028 * n);
 		const center =
@@ -122,7 +131,7 @@ export class PrayerTimes {
 		const eclipticLongitude = normalizeDegrees(meanAnomaly + center + 102.9372 + 180);
 		const declination = solarDeclination(eclipticLongitude);
 		const eqTime = equationOfTime(meanAnomaly, eclipticLongitude);
-		const dhuhrHours = 12 + 3.5 - coordinates.longitude / 15 - eqTime / 60;
+		const dhuhrHours = 12 + timezoneOffset - coordinates.longitude / 15 - eqTime / 60;
 		const sunriseAngle = -0.833;
 		const sunriseOffset = hourAngle(coordinates.latitude, declination, sunriseAngle);
 		const fajrOffset = hourAngle(coordinates.latitude, declination, -parameters.fajrAngle);
@@ -132,18 +141,28 @@ export class PrayerTimes {
 			Math.atan(1 / (1 + Math.tan(degreesToRadians(Math.abs(coordinates.latitude - declination))))),
 		);
 		const asrOffset = hourAngle(coordinates.latitude, declination, asrAltitude);
-		this.dhuhr = dateFromLocalHours(date, dhuhrHours);
-		this.sunrise = dateFromLocalHours(date, dhuhrHours - sunriseOffset);
-		this.sunset = dateFromLocalHours(date, dhuhrHours + sunriseOffset);
-		this.fajr = dateFromLocalHours(date, dhuhrHours - fajrOffset);
-		this.asr = dateFromLocalHours(date, dhuhrHours + asrOffset);
+
+		this.dhuhr = dateFromLocalHours(date, dhuhrHours, timezoneOffset);
+		this.sunrise = dateFromLocalHours(date, dhuhrHours - sunriseOffset, timezoneOffset);
+		this.sunset = dateFromLocalHours(date, dhuhrHours + sunriseOffset, timezoneOffset);
+		this.fajr = dateFromLocalHours(date, dhuhrHours - fajrOffset, timezoneOffset);
+		this.asr = dateFromLocalHours(date, dhuhrHours + asrOffset, timezoneOffset);
 		this.maghrib =
 			parameters.maghribAngle === 0
 				? this.sunset
-				: dateFromLocalHours(date, dhuhrHours + maghribOffset);
-		this.isha = dateFromLocalHours(date, dhuhrHours + ishaOffset);
+				: dateFromLocalHours(date, dhuhrHours + maghribOffset, timezoneOffset);
+		this.isha = dateFromLocalHours(date, dhuhrHours + ishaOffset, timezoneOffset);
+
 		const nightStart = dhuhrHours + sunriseOffset;
-		const nextFajr = dhuhrHours + 24 - fajrOffset;
-		this.midnight = dateFromLocalHours(date, nightStart + (nextFajr - nightStart) / 2);
+		const nextMorning =
+			parameters.midnightMode === "jafari"
+				? dhuhrHours + 24 - fajrOffset
+				: dhuhrHours + 24 - sunriseOffset;
+
+		this.midnight = dateFromLocalHours(
+			date,
+			nightStart + (nextMorning - nightStart) / 2,
+			timezoneOffset,
+		);
 	}
 }
