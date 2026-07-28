@@ -1,5 +1,9 @@
 import { Notice, Plugin } from "obsidian";
-import { STATUS_BAR_UPDATE_INTERVAL_MS, VIEW_TYPE_PRAYER_TIMES } from "./core/constants";
+import {
+	ACTIVE_PRAYER_THRESHOLD_MS,
+	STATUS_BAR_UPDATE_INTERVAL_MS,
+	VIEW_TYPE_PRAYER_TIMES,
+} from "./core/constants";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./core/settings";
 import { CityService } from "./services/city-service";
 import { PrayerService } from "./services/prayer-service";
@@ -95,11 +99,16 @@ export default class PrayerChimePlugin extends Plugin {
 			const city =
 				cities.find((c) => c.id === this.settings.selectedCityId) ?? this.cities.getTehran(cities);
 			const calculated = this.prayer.calculate(city, this.settings);
-			const nextPrayer: PrayerTimeItem | undefined = calculated.items.find(
-				(item) => item.timestamp > Date.now(),
+			const now = Date.now();
+			const activePrayer: PrayerTimeItem | undefined = calculated.items.find(
+				(item) => now >= item.timestamp && now - item.timestamp <= ACTIVE_PRAYER_THRESHOLD_MS,
 			);
+			const nextPrayer: PrayerTimeItem | undefined =
+				activePrayer ?? calculated.items.find((item) => item.timestamp > now);
 			this.statusBarEl.setText(
-				nextPrayer ? `🕌 بعدی: ${nextPrayer.label} ${nextPrayer.time}` : "🕌 پایان اوقات امروز",
+				nextPrayer
+					? `🕌 ${activePrayer ? "اکنون" : "بعدی"}: ${nextPrayer.label} ${nextPrayer.time}`
+					: "🕌 پایان اوقات امروز",
 			);
 		} catch {
 			new Notice("PrayerChime: Failed to update status bar");

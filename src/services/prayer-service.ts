@@ -50,6 +50,8 @@ const getTehranDateParts = (date: Date): DateParts => {
 	};
 };
 
+const getTehranDateKey = (): string => DATE_FORMATTER.format(new Date());
+
 const getTehranDate = (): Date => {
 	const { year, month, day } = getTehranDateParts(new Date());
 	return new Date(Date.UTC(year, month - 1, day));
@@ -58,6 +60,10 @@ const getTehranDate = (): Date => {
 const toPersianTime = (date: Date): string => TIME_FORMATTER.format(date).replace("۲۴:", "۰۰:");
 
 export class PrayerService {
+	getCurrentDateKey(): string {
+		return getTehranDateKey();
+	}
+
 	calculate(city: City, settings: PrayerChimeSettings): CalculatedPrayerTimes {
 		const coordinates = new Coordinates(Number(city.latitude), Number(city.longitude));
 		let methodParams: import("./adhan").CalculationParameters;
@@ -89,18 +95,13 @@ export class PrayerService {
 			isha: prayerTimes.isha,
 			midnight: prayerTimes.midnight,
 		};
-		const items: PrayerTimeItem[] = [];
-		for (const key of PRAYER_ORDER) {
-			const display = settings.displayedTimes[key];
-			if (display?.display) {
-				items.push({
-					key,
-					label: display.text,
-					time: toPersianTime(values[key]),
-					timestamp: values[key].getTime(),
-				});
-			}
-		}
-		return { city, dateKey: DATE_FORMATTER.format(new Date()), items };
+		const allItems: PrayerTimeItem[] = PRAYER_ORDER.map((key) => ({
+			key,
+			label: settings.displayedTimes[key]?.text ?? key,
+			time: toPersianTime(values[key]),
+			timestamp: values[key].getTime(),
+		}));
+		const items = allItems.filter((item) => settings.displayedTimes[item.key]?.display);
+		return { city, dateKey: getTehranDateKey(), items, allItems };
 	}
 }

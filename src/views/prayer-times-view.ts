@@ -137,8 +137,8 @@ export class PrayerTimesView extends ItemView {
 						}
 
 						menu.showAtMouseEvent(event);
-					})().catch((err) => {
-						new Notice(err);
+					})().catch((err: unknown) => {
+						new Notice(err instanceof Error ? err.message : String(err));
 					});
 				});
 			}
@@ -227,6 +227,11 @@ export class PrayerTimesView extends ItemView {
 	private updateItemStatuses(): void {
 		if (!this.lastCalculatedTimes) return;
 
+		if (this.lastCalculatedTimes.dateKey !== this.plugin.prayer.getCurrentDateKey()) {
+			this.refresh();
+			return;
+		}
+
 		const now = Date.now();
 		const warningMs = this.plugin.settings.warningIntervalMinutes * 60 * 1000;
 		const activeThresholdMs = ACTIVE_PRAYER_THRESHOLD_MS;
@@ -243,10 +248,10 @@ export class PrayerTimesView extends ItemView {
 
 			if (diff < -activeThresholdMs) {
 				itemEl.addClass("is-past");
-			} else if (diff >= -activeThresholdMs && diff <= activeThresholdMs) {
+			} else if (diff <= 0 && diff >= -activeThresholdMs) {
 				itemEl.addClass("is-now");
 				if (!nextItem) nextItem = item;
-			} else if (diff > activeThresholdMs && diff <= warningMs) {
+			} else if (diff > 0 && diff <= warningMs) {
 				itemEl.addClass("is-approaching");
 				if (!nextItem) nextItem = item;
 			} else {
@@ -259,9 +264,10 @@ export class PrayerTimesView extends ItemView {
 			if (nextItem) {
 				this.nextLabelEl.removeClass("hidden");
 				this.nextValueEl.removeClass("hidden");
-				this.nextLabelEl.setText(`وقت بعدی · ${nextItem.label}`);
+				const isNow = now >= nextItem.timestamp && now - nextItem.timestamp <= activeThresholdMs;
+				this.nextLabelEl.setText(`${isNow ? "وقت فعلی" : "وقت بعدی"} · ${nextItem.label}`);
 				this.nextValueEl.setText(toPersianDigits(nextItem.time));
-				this.nextCountdownEl.setText(formatCountdown(nextItem.timestamp - now));
+				this.nextCountdownEl.setText(isNow ? "اکنون" : formatCountdown(nextItem.timestamp - now));
 			} else {
 				this.nextLabelEl.addClass("hidden");
 				this.nextValueEl.addClass("hidden");
@@ -293,7 +299,7 @@ export class PrayerTimesView extends ItemView {
 		if (!this.sky) return;
 
 		const getTs = (key: PrayerKey): number | null =>
-			times.items.find((i) => i.key === key)?.timestamp ?? null;
+			times.allItems.find((i) => i.key === key)?.timestamp ?? null;
 
 		const sunrise = getTs("sunrise");
 		const sunset = getTs("sunset");
@@ -308,7 +314,7 @@ export class PrayerTimesView extends ItemView {
 			sunset,
 			prevSunset: isBeforeSunrise ? sunset - dayMs : sunset,
 			nextSunrise: isBeforeSunrise ? sunrise : sunrise + dayMs,
-			markers: times.items
+			markers: times.allItems
 				.filter((item) => item.key !== "sunrise" && item.key !== "sunset")
 				.map((item) => ({ key: item.key, label: item.label, timestamp: item.timestamp })),
 		});
@@ -331,7 +337,7 @@ export class PrayerTimesView extends ItemView {
 		times: CalculatedPrayerTimes,
 	): "morning" | "day" | "evening" | "night" {
 		const getTs = (key: PrayerKey): number =>
-			times.items.find((i) => i.key === key)?.timestamp ?? 0;
+			times.allItems.find((i) => i.key === key)?.timestamp ?? 0;
 
 		const fajr = getTs("fajr");
 		const dhuhr = getTs("dhuhr");

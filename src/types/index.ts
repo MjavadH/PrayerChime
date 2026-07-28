@@ -59,4 +59,5 @@ export interface CalculatedPrayerTimes {
 	city: City;
 	dateKey: string;
 	items: PrayerTimeItem[];
+	allItems: PrayerTimeItem[];
 }
