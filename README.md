@@ -7,6 +7,7 @@ The plugin is now available in **Obsidian Community Plugins**. Installing from C
 ## Contents
 
 - [Features](#features)
+- [Screenshot](#screenshot)
 - [Installation](#installation)
 - [Getting started](#getting-started)
 - [How it works](#how-it-works)
@@ -18,6 +19,12 @@ The plugin is now available in **Obsidian Community Plugins**. Installing from C
 - [Contributing](#contributing)
 - [License](#license)
 - [Persian README](REAME-FA.md)
+
+## screenshot
+|              Desktop               |              Mobile              |
+|:----------------------------------:|:--------------------------------:|
+| ![Desktop](screenshot/desktop.png) | ![Mobile](screenshot/mobile.jpg) |
+
 
 ## Features
 
