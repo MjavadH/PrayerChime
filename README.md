@@ -4,6 +4,8 @@
 
 The plugin is now available in **Obsidian Community Plugins**. Installing from Community Plugins is the recommended installation method.
 
+https://github.com/user-attachments/assets/f94796c7-ddf9-40ba-8b11-3e3b409fa09b
+
 ## Contents
 
 - [Features](#features)
